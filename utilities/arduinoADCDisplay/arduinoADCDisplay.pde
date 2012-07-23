@@ -15,28 +15,33 @@ int[] pins;
 RangerAverage avg;
 
 int numberOfPins = 8; // Typ. 6, 8 for Mini & Nano, 16 for Mega
+
+
 void setup() {
   size(numberOfPins*73+120,400,OPENGL);
   smooth();
-  frameRate(120);
+  frameRate(240);
   font = createFont("Courier",18);
   textFont(font);
   println(Arduino.list());
   arduino = new Arduino(this, Arduino.list()[0], 57600);
   pins = new int[numberOfPins];
-  avg = new RangerAverage(arduino, numberOfPins, 5);
+  avg = new RangerAverage(arduino, numberOfPins, 10);
 }
 void draw() {
   background(0);
-  fill(#00FF00);  
+  fill(#ff8000);  
   text("   PIN", 15, 25);
   text("   ADC", 15, 65);
   text("   VDC", 15, 105);
   text("RAW-CM", 15, 145);
   text("RAW-IN", 15, 185);
-  text("T MEAN", 15, 225);
+  text("  MEAN", 15, 225);
+  text("MDMEAN", 15, 265);
+  text("  MNCM", 15, 305);
+  text("MDMNCM", 15, 345);
   text("UPDATE RATE: " + (int)frameRate + "Hz", 15, height-20);
-  
+  text("MS: " + millis(), 240, height-20); 
   avg.update();
   
   for (int i=0; i < numberOfPins; i++) {
@@ -67,6 +72,17 @@ void draw() {
     text( nf(avg.getMean(i),4,-1), 70*i+120, 225);
   }
   
+  for (int i=0; i < numberOfPins; i++) {
+    text( nf(avg.getMedianMean(i),4,-1), 70*i+120, 265);
+  }
+  
+  for (int i=0; i < numberOfPins; i++) {
+    text( nf(12343.85 * pow(avg.getMean(i),-1.15),2,1), 70*i+120, 305);
+  }
+  
+  for (int i=0; i < numberOfPins; i++) {
+    text( nf(12343.85 * pow(avg.getMedianMean(i) ,-1.15),2,1), 70*i+120, 345);
+  }
 }
 
 class RangerAverage {
@@ -102,10 +118,21 @@ class RangerAverage {
     }
   }
   float getMean(int pin) {
+    // takes mean of sampleCount values. Output clamped to 0-Float.MAX_VALUE
     float sum = 0;
     for (int i=0; i<sampleCount; i++) {
       sum += readings[pin][i];
     }
-    return sum/sampleCount;
+    return constrain(sum/sampleCount,0,Float.MAX_VALUE);
+  }
+  float getMedianMean(int pin) {
+    // takes mean of middle sampleCount-2 values. Output clamped to 0-Float.MAX_VALUE
+    float sum = 0;
+    int[] sortedReadings = readings[pin];
+    Arrays.sort(sortedReadings);
+    for (int i=1; i<sampleCount-1; i++) {
+      sum += sortedReadings[i];
+    }
+    return constrain(sum/sampleCount-2,0,Float.MAX_VALUE);  
   }
 }
