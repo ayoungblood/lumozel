@@ -1,10 +1,10 @@
-import cc.arduino.*;
 import processing.serial.*;
+import cc.arduino.*;
 import processing.opengl.*;
 
 /******************************************************************************
  * Simple sketch displaying the values of all the Arduino analog pins
- * Also displays the corresponding distance for a connected Sharp GP GP2Y0A21YK
+ * Also displays the corresponding distance for a connected Sharp GP2Y0A21YK
  * Author: Akira Youngblood
  * Development Begun 2012-07-22
  ******************************************************************************/
@@ -13,9 +13,7 @@ PFont font;
 Arduino arduino;
 int[] pins;
 RangerAverage avg;
-
 int numberOfPins = 8; // Typ. 6, 8 for Mini & Nano, 16 for Mega
-
 
 void setup() {
   size(numberOfPins*73+120,400,OPENGL);
@@ -28,6 +26,7 @@ void setup() {
   pins = new int[numberOfPins];
   avg = new RangerAverage(arduino, numberOfPins, 10);
 }
+
 void draw() {
   background(0);
   fill(#ff8000);  
@@ -41,7 +40,8 @@ void draw() {
   text("  MNCM", 15, 305);
   text("MDMNCM", 15, 345);
   text("UPDATE RATE: " + (int)frameRate + "Hz", 15, height-20);
-  text("MS: " + millis(), 240, height-20); 
+  text("MS: " + millis(), 240, height-20);
+  
   avg.update();
   
   for (int i=0; i < numberOfPins; i++) {
@@ -108,7 +108,7 @@ class RangerAverage {
     }
     index = 0;
   }
-  void update() {
+  void update() { // the update() method must be called BEFORE getting averages
     for (int i=0; i < numOfPins; i++) {
       readings[i][index] = arduino.analogRead(i);
     }
