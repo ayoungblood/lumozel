@@ -14,6 +14,8 @@ Arduino arduino;
 int xPos = 50;
 int pinOfInterest = 0;
 
+float calibrate = 14750; // typically 12343.85
+
 void setup() {
   size(1000,1200,OPENGL);
   frameRate(240);
@@ -25,14 +27,14 @@ void setup() {
 void draw() {
   fill(255);
   stroke(#00ff00);
-  rect(xPos, 1200-map(12343.85 * pow(arduino.analogRead(pinOfInterest),-1.15),0,60,0,1200), 1,1);
+  rect(xPos, 1200-map(calibrate * pow(arduino.analogRead(pinOfInterest),-1.15),0,60,0,1200), 1,1);
   fill(0); noStroke();
   rect(width-50,0,50,200);
   fill(255);
   text((int)frameRate,width-45,20);
   text(xPos,width-45, 45);
   text(arduino.analogRead(pinOfInterest),width-45,70);
-  text( 12343.85 * pow(arduino.analogRead(pinOfInterest), -1.15), width-45, 95);
+  text( calibrate * pow(arduino.analogRead(pinOfInterest), -1.15), width-45, 95);
   xPos++;
   if (xPos > width-50) {
     xPos = 50;
