@@ -11,8 +11,9 @@ Arduino arduino;
 int[] pins = new int[8];
 
 void setup() {
-  size(640,400,OPENGL);
+  size(700,400,OPENGL);
   smooth();
+  frameRate(120);
   font = createFont("Courier",18);
   textFont(font);
   charHeight = textAscent() + textDescent();
@@ -24,13 +25,15 @@ void setup() {
 void draw() {
   background(0);
   fill(#00FF00);  
-  text("PIN", 15, 25);
-  text("ADC", 15, 65);
-  text("VDC", 15, 105);
-  text("CM", 15+charWidth, 145);
+  text("   PIN", 15, 25);
+  text("   ADC", 15, 65);
+  text("   VDC", 15, 105);
+  text("RAW-CM", 15, 145);
+  text("RAW-IN", 15, 185);
+  text("UPDATE RATE: " + (int)frameRate + "Hz", 15, height-20);
   
   for (int i=0; i < 8; i++) {
-    text("A"+i, 70*i+80, 25);
+    text("A"+i, 70*i+120, 25);
   }
   
   for (int i=0; i < 8; i++) {
@@ -38,15 +41,20 @@ void draw() {
   }
   
   for (int i=0; i < 8; i++) {
-    text(pins[i], 70*i+80, 65);
+    text(pins[i], 70*i+120, 65);
   }
   
   for (int i=0; i < 8; i++) {
-    text( nf(map(pins[i],0,1023,0,5),1,2) , 70*i+80, 105);
+    text( nf(map(pins[i],0,1023,0,5),1,2) , 70*i+120, 105);
   }
   
   for (int i=0; i < 8; i++) {
-    text( nf(12343.85 * pow(pins[i],-1.15),2,1) , 70*i+80, 145);
+    text( nf(12343.85 * pow(pins[i],-1.15),2,1) , 70*i+120, 145);
   }
+  
+  for (int i=0; i < 8; i++) {
+    text( nf(2.54*(12343.85 * pow(pins[i],-1.15)),2,1) , 70*i+120, 185);
+  }
+  
   
 }
