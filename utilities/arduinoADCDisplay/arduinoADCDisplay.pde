@@ -13,7 +13,7 @@ PFont font;
 Arduino arduino;
 int[] pins;
 RangerAverage avg;
-int numberOfPins = 8; // Typ. 6, 8 for Mini & Nano, 16 for Mega
+int numberOfPins = 6; // Typ. 6, 8 for Mini & Nano, 16 for Mega
 
 void setup() {
   size(numberOfPins*73+120,400,OPENGL);

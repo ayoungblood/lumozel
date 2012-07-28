@@ -34,7 +34,8 @@ void draw() {
   text((int)frameRate,width-45,20);
   text(xPos,width-45, 45);
   text(arduino.analogRead(pinOfInterest),width-45,70);
-  text( calibrate * pow(arduino.analogRead(pinOfInterest), -1.15), width-45, 95);
+  text(map(arduino.analogRead(pinOfInterest),0,1023,0,5),width-45,95);
+  text( calibrate * pow(arduino.analogRead(pinOfInterest), -1.15), width-45, 115);
   xPos++;
   if (xPos > width-50) {
     xPos = 50;
