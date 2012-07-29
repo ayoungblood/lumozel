@@ -1,0 +1,12 @@
+*****************************************
+* scratch.txt                           *
+* Notes for development                 *
+* Also, I/0 listings and delegation     *
+*****************************************
+
+2012-07-28 I/O draft
+2 ADC for IR ranger
+2 DIG for associated phototransistors
+2/4 DIG for touch, octv. up/down
+
+Accessibility, ease of use, and easy theory use are important goals.
