@@ -8,5 +8,24 @@
 2 ADC for IR ranger
 2 DIG for associated phototransistors
 2/4 DIG for touch, octv. up/down
+USB - note: get extender, perhaps USB Mini-B plug to USB B receptacle?
 
 Accessibility, ease of use, and easy theory use are important goals.
+
+
+Two different capacitive touch sensing implementations:
+
+Via amagill:
+Using one digital pin. Set pin to output, set high, wait, set to input, observe how long it takes to drop to low. Slower = greater capacitance.
+
+Via Arduino Playground, CapSense, Paul Badger:
+Using two digital pins. Connect send pin to receive pin via 1+ megohm resistor, foil attached to receive pin. Toggle send pin state, observe how long it takes for receive pin to change to same state. Longer time = greater capacitance.
+Putting ground plane under foil contacts improves sensitivity and eliminates floating ground problems.
+
+Observations:
+Due to the difficulty of proper timing and the inability to use wait/delay when running a Processing sketch, perhaps run capacitance sensing in it's own thread, and have the main thread (Animation Thread) check it periodically (once per draw loop).
+
+
+Threading:
+As noted above, cap touch sensing can be moved to separate thread. Additionally, other things might do much better in a separate thread.
+Note that Processing spawns its own threads for event callback (serialEvent, captureEvent, etc.)
