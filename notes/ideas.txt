@@ -9,3 +9,6 @@ Body current sensing would be cool. Very cool.
 Computer vision idea:
 Align array of lasers pointing up, and have a camera with the same alignment.
 Use CV to look for red dots, and plot their positions.
+
+Make Lumozel standalone, with MIDI I/O, using standalone code running on Arduino.
+Eliminating need for computer, and would be able to communicate directly with iOS devices/Android.
