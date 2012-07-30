@@ -15,4 +15,4 @@ Goals
 
 To create an intuitive controller, with a focus towards live instrumentation applications.
 To create code that can be easily adapted.
-To make a software backend for the controller that allows the controller to interface with other devices using a variety of protocols, including OSC and MIDI.
+To make a software backend for the controller that allows the controller to interface with other devices using a variety of protocols, including OSC and MIDI. To create an instrument that teaches the basics of music theory, using colors and an easy-to-use interface.
