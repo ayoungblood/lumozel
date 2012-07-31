@@ -1,0 +1,68 @@
+****************************************
+Notes on what will eventually need to be implemented
+2012-07-31 Akira Youngblood
+
+****************************************
+
+========================================
+Delegation tree
+========================================
+Main thread (Animation Thread)
+    GUI, ControlP5
+        ControlP5.draw()
+        Arduino input drawing
+        Various stat
+    
+Touch sensor thread
+    Fetch digital pin data for touch sensors
+    Fire octave +/- events, etc
+
+
+========================================
+Basic structure
+========================================
+
+setup()
+    normal P5 setup
+    // standalone functions for each block
+    start OSC
+    create GUI
+    start audio
+    start MIDI, possibly
+    
+draw()
+    basic P5 stuff
+    update GUI
+    draw stat(x,y)
+    draw more stat(x,y)
+    cp5.draw
+    
+
+// methods needed
+start OSC
+stop OSC
+oscEvent(OscMessage in) // callback for OSC events
+start audio
+stop audio
+exit
+// possibly
+start MIDI
+stop MIDI
+panic MIDI
+list MIDI
+notOnReceived
+noteOffReceived
+
+========================================
+Classes to write
+========================================
+
+// Classes needed
+LMDisplayList (for OSC/MIDI history, status logging, etc)
+LMSensor (abstract class)
+    LMTouchSensor (for touch sensor)
+    LMLaserSensor (for phototransistor)
+    LMGPSensor (for Sharp GP sensor)
+
+LMFFTDisplay (wait to implement this, audio is 2nd priority)
+

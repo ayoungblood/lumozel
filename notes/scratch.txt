@@ -12,6 +12,17 @@ USB - note: get extender, perhaps USB Mini-B plug to USB B receptacle?
 
 Accessibility, ease of use, and easy theory use are important goals.
 
+Implement audio and MIDI last. The basics + OSC are the primary goal.
+
+Note that OSC must use SYN namespacing if at all possible.
+
+Everything must be checked that it is updated. To check:
+Processing
+ControlP5
+OscP5, NetP5
+Minim
+whatever MIDI library we end up using
+
 
 Two different capacitive touch sensing implementations:
 
