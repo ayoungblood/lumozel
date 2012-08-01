@@ -53,6 +53,14 @@ list MIDI
 notOnReceived
 noteOffReceived
 
+** Awesome method to write: adds line to both System.out and Lumozel debug logs
+void printlnToAll(String s) {
+    println(s);
+    addStatusHistory(s);
+    etc..
+    // Also make it handle String[]
+}
+
 ========================================
 Classes to write
 ========================================
@@ -63,6 +71,6 @@ LMSensor (abstract class)
     LMTouchSensor (for touch sensor)
     LMLaserSensor (for phototransistor)
     LMGPSensor (for Sharp GP sensor)
-
+LMTouchSensorThread (perhaps implemented as an inner class of LMTouchSensor)
 LMFFTDisplay (wait to implement this, audio is 2nd priority)
 

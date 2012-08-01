@@ -23,6 +23,8 @@ OscP5, NetP5
 Minim
 whatever MIDI library we end up using
 
+Exception catching needs to be much more heavily implemented.
+Some exceptions are best handled by waiting 1000ms and trying once again.
 
 Two different capacitive touch sensing implementations:
 
@@ -33,10 +35,8 @@ Via Arduino Playground, CapSense, Paul Badger:
 Using two digital pins. Connect send pin to receive pin via 1+ megohm resistor, foil attached to receive pin. Toggle send pin state, observe how long it takes for receive pin to change to same state. Longer time = greater capacitance.
 Putting ground plane under foil contacts improves sensitivity and eliminates floating ground problems.
 
-Observations:
-Due to the difficulty of proper timing and the inability to use wait/delay when running a Processing sketch, perhaps run capacitance sensing in it's own thread, and have the main thread (Animation Thread) check it periodically (once per draw loop).
+Touch sensing will run in its own thread, perhaps create the thread as a inner class of LMTouchSensor.
+Also, all classes (including LMTouchSensor) need to have a proper destroy/stop/exit method that will be called in stop(). 
 
+Possible to implement an optional debug file, have boolean for DEBUG_FILE, if true, create a text file and log data..
 
-Threading:
-As noted above, cap touch sensing can be moved to separate thread. Additionally, other things might do much better in a separate thread.
-Note that Processing spawns its own threads for event callback (serialEvent, captureEvent, etc.)
