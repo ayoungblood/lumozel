@@ -45,13 +45,17 @@ oscEvent(OscMessage in) // callback for OSC events
 start audio
 stop audio
 exit
-// possibly
-start MIDI
-stop MIDI
-panic MIDI
-list MIDI
-notOnReceived
-noteOffReceived
+MIDI Object (unite all methods under a class, hopefully)
+    start MIDI
+    stop MIDI
+    panic MIDI
+    list MIDI
+    sendNoteOn
+    sendNoteOff
+    //eventually
+    notOnReceived
+    noteOffReceived
+
 
 ** Awesome method to write: adds line to both System.out and Lumozel debug logs
 void printlnToAll(String s) {

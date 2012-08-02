@@ -12,9 +12,13 @@ USB - note: get extender, perhaps USB Mini-B plug to USB B receptacle?
 
 Accessibility, ease of use, and easy theory use are important goals.
 
-Implement audio and MIDI last. The basics + OSC are the primary goal.
-
-Note that OSC must use SYN namespacing if at all possible.
+Priorities, from high to low:
+Core
+MIDI output
+OSC input
+MIDI input
+Audio I/O
+FFT displays
 
 Everything must be checked that it is updated. To check:
 Processing
@@ -25,6 +29,21 @@ whatever MIDI library we end up using
 
 Exception catching needs to be much more heavily implemented.
 Some exceptions are best handled by waiting 1000ms and trying once again.
+
+Terms:
+Beam - meaning the aggregate sensor, composed of laser/photodiode pair and IR ranger
+
+UI:
+Section for each beam
+    Division controls
+    Octv +/-
+    MIDI out (channel, velocity)
+Section for MIDI
+    Start MIDI
+    Stop MIDI
+    MIDI status
+    MIDI history
+
 
 Two different capacitive touch sensing implementations:
 
@@ -39,4 +58,7 @@ Touch sensing will run in its own thread, perhaps create the thread as a inner c
 Also, all classes (including LMTouchSensor) need to have a proper destroy/stop/exit method that will be called in stop(). 
 
 Possible to implement an optional debug file, have boolean for DEBUG_FILE, if true, create a text file and log data..
+
+Use OSC /SYN/ namespacing for output only.
+OSC communication between mobile controller (iOS/Android device) will use proprietary protocol, as rather stranger parameters are being transmitted.
 
