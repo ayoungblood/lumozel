@@ -63,3 +63,6 @@ Possible to implement an optional debug file, have boolean for DEBUG_FILE, if tr
 Use OSC /SYN/ namespacing for output only.
 OSC communication between mobile controller (iOS/Android device) will use proprietary protocol, as rather stranger parameters are being transmitted.
 
+FOR THE FUTURE:
+Should implement abstract class LMDisplay and have LMDisplayBar and LMDisplayList inherit from it
+

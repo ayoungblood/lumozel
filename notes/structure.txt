@@ -70,7 +70,7 @@ Classes to write
 ========================================
 
 // Classes needed
-LMDisplayList (for OSC/MIDI history, status logging, etc)
+LMBeamControl (stores beam divisions, MIDI note range, octv info, etc)
 LMSensor (abstract class)
     LMTouchSensor (for touch sensor)
     LMLaserSensor (for phototransistor)
@@ -78,3 +78,6 @@ LMSensor (abstract class)
 LMTouchSensorThread (perhaps implemented as an inner class of LMTouchSensor)
 LMFFTDisplay (wait to implement this, audio is 2nd priority)
 
+IMPLEMENTED:
+LMDisplayList (for OSC/MIDI history, status logging, etc)
+LMDisplayBar (for value output display)
