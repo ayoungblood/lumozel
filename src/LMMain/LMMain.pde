@@ -1,3 +1,5 @@
+import cc.arduino.*;
+import processing.serial.*;
 import controlP5.*;
 
 
@@ -13,7 +15,7 @@ import controlP5.*;
 ControlP5 cp5;
 PFont mainFont, smallFont;
 
-LMDisplayBar beam1RawBar;
+LMDisplayBar beam1RawBar, beam1FiltBar;
 
 void setup() {
   size(1024,768,P2D); // Using the P2D renderer because it is fast. Fast renderer = better response. TODO: resize window
@@ -57,6 +59,8 @@ void createGUI() {
   // Beam 1
   beam1RawBar = new LMDisplayBar(55,50);
   beam1RawBar.setHeight(6);
+  beam1FiltBar = new LMDisplayBar(55, 64);
+  beam1FiltBar.setHeight(6);
   
   
 }
@@ -79,73 +83,36 @@ void updateGUI() {
   fill(255);
   text("RAW",20,48);
   text("FILT",20,48+textDescent()+textAscent());
-  // beam1RawBar.setValue(foo.bar);
+  // beam1RawBar.setValue(foo.raw);
   beam1RawBar.draw();
+  // beam1FiltBar.setValue(foo.filt);
+  beam1FiltBar.draw();
   
   
 }
 
-// ******************
-// LMDisplayBar class
-class LMDisplayBar {
-  private int xPos;
-  private int yPos;
-  private int displayWidth;
-  private int displayHeight;
-  private float value;
-  private color barColor;
-  private color outlineColor;
-  private float maximum;
-  private float minimum;
-  private boolean isHorizontal;
+/**************************
+ * LMDisplay abstract class
+ **************************/
+abstract class LMDisplay {
+  int xPosition, yPosition;
+  int displayWidth, displayHeight;
   
-  LMDisplayBar(int x, int y) {
-    xPos = x;
-    yPos = y;
-    displayWidth = 100;
-    displayHeight = 2;
-    value = 0f;
-    barColor = color(0,255,0);
-    outlineColor = color(255);
-    maximum = 200;
-    minimum = 0;
-    isHorizontal = true;
-  }
-  
-  void draw() {
-    if (isHorizontal) {
-      fill(0);
-      stroke(outlineColor);
-      rect(xPos,yPos, displayWidth, displayHeight);
-      fill(barColor);
-      noStroke();
-      rect(xPos+1, yPos+1, map(constrain(value,minimum,maximum), minimum, maximum, 0, displayWidth-1), displayHeight-1);
-      
-    }
-    else {
-      fill(0);
-      stroke(outlineColor);
-      rect(xPos,yPos, displayWidth, displayHeight);
-      fill(barColor);
-      noStroke();
-      rect(xPos+1, yPos+1, displayWidth-1, map(constrain(value,minimum,maximum), minimum, maximum, 0, displayHeight-1));
-    }
-  }
   void setPosition(int x, int y) {
-    xPos = x;
-    yPos = y;
+    xPosition = x;
+    yPosition = y;
   }
   int[] getPosition() {
     int[] pos = new int[2];
-    pos[0] = xPos;
-    pos[1] = yPos;
+    pos[0] = xPosition;
+    pos[1] = yPosition;
     return pos;
   }
-  void setValue(float v) {
-    value = v;
+  void setXPosition(int x) {
+    xPosition = x;
   }
-  float getValue() {
-    return value;
+  void setYPosition(int y) {
+    yPosition = y;
   }
   void setWidth(int w) {
     displayWidth = w;
@@ -158,6 +125,58 @@ class LMDisplayBar {
   }
   int getHeight() {
     return displayHeight;
+  }
+}
+
+/********************
+ * LMDisplayBar class
+ ********************/
+class LMDisplayBar extends LMDisplay {
+  private float value;
+  private color barColor;
+  private color outlineColor;
+  private float maximum;
+  private float minimum;
+  private boolean isHorizontal;
+  
+  LMDisplayBar(int x, int y) {
+    xPosition = x;
+    yPosition = y;
+    displayWidth = 256;
+    displayHeight = 2;
+    value = 0f;
+    barColor = color(0,255,0);
+    outlineColor = color(180);
+    maximum = 200;
+    minimum = 0;
+    isHorizontal = true;
+  }
+  
+  void draw() {
+    if (isHorizontal) {
+      fill(0);
+      stroke(outlineColor);
+      rect(xPosition,yPosition, displayWidth, displayHeight);
+      fill(barColor);
+      noStroke();
+      rect(xPosition+1, yPosition+1, map(constrain(value,minimum,maximum), minimum, maximum, 0, displayWidth-1), displayHeight-1);
+      
+    }
+    else {
+      fill(0);
+      stroke(outlineColor);
+      rect(xPosition,yPosition, displayWidth, displayHeight);
+      fill(barColor);
+      noStroke();
+      rect(xPosition+1, yPosition+1, displayWidth-1, map(constrain(value,minimum,maximum), minimum, maximum, 0, displayHeight-1));
+    }
+  }
+  
+  void setValue(float v) {
+    value = v;
+  }
+  float getValue() {
+    return value;
   }
   void setBarColor(color c) {
     barColor = c;
@@ -188,12 +207,12 @@ class LMDisplayBar {
     maximum = max;
   }
     
-}
-    
+} 
 
-// *******************
-// LMDisplayList class
-class LMDisplayList {
+/*********************
+ * LMDisplayList class
+ *********************/
+class LMDisplayList extends LMDisplay {
   private int xPos;
   private int yPos;
   private int displayWidth;
@@ -203,8 +222,8 @@ class LMDisplayList {
   private color textColor;
   
   LMDisplayList(int x, int y) {
-    xPos = x;
-    yPos = y;
+    xPosition = x;
+    yPosition = y;
     displayWidth = 160;
     displayHeight = 80;
     // TODO: Set list contents length based on displayHeight/line height
@@ -220,10 +239,9 @@ class LMDisplayList {
     textFont(smallFont);
     for (int i=0; i < contents.length; i++) {
       // TODO: Truncate string length if pixel length is greater than displayWidth
-      text(contents[i], xPos+2, yPos + (textDescent()+textAscent())*(i+1)-textAscent()-1);
+      text(contents[i], xPosition+2, yPosition + (textDescent()+textAscent())*(i+1)-textAscent()-1);
     }
   }
-  
   void addLine(String s) {
     contents[contentsPointer] = s;
     contentsPointer ++;
@@ -233,28 +251,6 @@ class LMDisplayList {
   }
   String getLine(int index) {
     return contents[index];
-  }
-  void setPosition(int x, int y) {
-    xPos = x;
-    yPos = y;
-  }
-  int[] getPosition() {
-    int[] pos = new int[2];
-    pos[0] = xPos;
-    pos[1] = yPos;
-    return pos;
-  }
-  void setWidth(int w) {
-    displayWidth = w;
-  }
-  int getWidth() {
-    return displayWidth;
-  }
-  void setHeight(int h) {
-    displayHeight = h;
-  }
-  int getHeight() {
-    return displayHeight;
   }
   void setTextColor(color c) {
     textColor = c;

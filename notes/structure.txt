@@ -79,5 +79,6 @@ LMTouchSensorThread (perhaps implemented as an inner class of LMTouchSensor)
 LMFFTDisplay (wait to implement this, audio is 2nd priority)
 
 IMPLEMENTED:
-LMDisplayList (for OSC/MIDI history, status logging, etc)
-LMDisplayBar (for value output display)
+LMDisplay (abstract class for onscreen display elements
+    LMDisplayList (for OSC/MIDI history, status logging, etc)
+    LMDisplayBar (for value output display)
