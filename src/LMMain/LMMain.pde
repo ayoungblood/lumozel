@@ -91,6 +91,48 @@ void updateGUI() {
   
 }
 
+/*******************************
+ * LMAnalogSensor abstract class
+ *******************************/
+abstract class LMAnalogSensor {
+  Arduino ar;
+  int pin;
+  
+  LMAnalogSensor(Arduino a, int p) {
+    ar = a;
+    pin = p;
+  }
+  
+  int getValue() {
+    return ar.analogRead(pin);
+  }
+  int getPin() {
+    return pin;
+  }
+  void setPin(int p) {
+    pin = p;
+  }
+  
+}
+
+class LMGPSensor extends LMAnalogSensor {
+  
+  LMGPSensor(Arduino a, int p) {
+    
+    super(a, p);
+  }
+  
+  float getCentimeters() {
+    // may need to be tweaked depending on sensor response curve
+    float adcValue = (float)ar.analogRead(pin);
+    return 12343.85 * pow(adcValue,-1.15);
+  }
+  float getInches() {
+    float adcValue = (float)ar.analogRead(pin);
+    return (12343.85 * pow(adcValue,-1.15))/2.54;
+  }
+}
+
 /**************************
  * LMDisplay abstract class
  **************************/
