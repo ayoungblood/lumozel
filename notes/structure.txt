@@ -71,10 +71,14 @@ Classes to write
 
 // Classes needed
 LMBeamControl (stores beam divisions, MIDI note range, octv info, etc)
-LMSensor (abstract class)
+    divisions, midi start note, int[] scale, string status, enabled, running
+    channel, velocity, 
+    
+LMAnalogSensor (simple analog sensor class, with averaging)
+    LMGPSensor (for Sharp GP sensor)
+LMDigitalSensor (simple digital sensor)
     LMTouchSensor (for touch sensor)
     LMLaserSensor (for phototransistor)
-    LMGPSensor (for Sharp GP sensor)
 LMTouchSensorThread (perhaps implemented as an inner class of LMTouchSensor)
 LMFFTDisplay (wait to implement this, audio is 2nd priority)
 
@@ -82,3 +86,4 @@ IMPLEMENTED:
 LMDisplay (abstract class for onscreen display elements
     LMDisplayList (for OSC/MIDI history, status logging, etc)
     LMDisplayBar (for value output display)
+LMMidiControl (for everything related to the midi I/O)
