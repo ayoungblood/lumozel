@@ -23,6 +23,8 @@ LMDisplayList systemStatusLog;
 
 // Beam 1
 DropdownList b1BaseNote, b1Scale, b1Mod, b1MidiChannel;
+Numberbox b1DivisionsBox;
+int b1Divisions;
 LMDisplayBar beam1RawBar, beam1FiltBar;
 
 
@@ -35,7 +37,7 @@ void setup() {
   
   // setupArduino();
   
-  midiSystem = new LMMidiControl(0, 0);
+  midiSystem = new LMMidiControl(2, 3);
   
 }
 
@@ -152,7 +154,6 @@ void createGUI() {
   b1Scale.addItem("MINOR", 1);
   b1Scale.addItem("CHROMATIC", 2);
   b1Scale.addItem("PENTATONIC", 3);
-  
   b1Mod = cp5.addDropdownList("mod B1")
     .setPosition(140,70)
     .setSize(60,100)
@@ -166,8 +167,21 @@ void createGUI() {
   for (int i=1; i <= 16; i++) {
     b1MidiChannel.addItem("CH " + i, i);
   }
-  beam1RawBar = new LMDisplayBar(10,120);
-  beam1FiltBar = new LMDisplayBar(10, 130);
+  b1DivisionsBox = cp5.addNumberbox("b1Divisions")
+    .setPosition(11,101)
+    .setSize(29,18)
+    .setValue(7)
+    .setMin(1)
+    .setMax(23)
+    .setMultiplier(0.0625)
+    .setCaptionLabel("")
+    ;
+  cp5.addTextlabel("foobar")
+    .setPosition(42,102)
+    .setValue("DIVS")
+    ;
+  beam1RawBar = new LMDisplayBar(11,131);
+  beam1FiltBar = new LMDisplayBar(11, 141);
   
   // MIDI
   cp5.addButton("start MIDI")
@@ -198,7 +212,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          midiSystem.panic();
         }
       }
     })
@@ -209,7 +223,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          midiSystem.list();
         }
       }
     })
@@ -219,8 +233,11 @@ void createGUI() {
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_PRESSED) {
+          midiSystem.sendTestNoteOn();
+        }
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          midiSystem.sendTestNoteOff();
         }
       }
     })
@@ -261,8 +278,14 @@ void updateGUI() {
   stroke(255);
   line(10,29,395,29);
   
-  fill(24,34,140); noStroke();
-  rect(10,75,120,20);
+  fill(2,52,77); noStroke();
+  rect(10,75,385,20);
+  fill(255);
+  textFont(smallFont);
+  text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",14,79);
+  stroke(4,104,154);
+  line(53,112,53,122);
+  line(10,122,395,122);
   
   textFont(smallFont);
   // beam1RawBar.setValue(foo.raw);
@@ -332,20 +355,28 @@ class LMMidiControl {
   String status;
   boolean running;
   boolean passthrough; // if true, incoming midi will be echoed out
-  
+  int lastTestNote;
   
   LMMidiControl(int in, int out) {
     midiInputDevice = in;
     midiOutputDevice = out;
     running = false;
     status = "HALTED";
+    start();
   }
   
-  void start(int in, int out) {
-    midiIn = RWMidi.getInputDevices()[in].createInput(this);
-    printlnToAll("Started MIDI input device: " + RWMidi.getInputDevices()[in] );
-    midiOut = RWMidi.getOutputDevices()[out].createOutput();
-    printlnToAll("Started MIDI output device: " + RWMidi.getOutputDevices()[out] );
+  void sendNoteOn(int ch, int nt, int vel) {
+    midiOut.sendNoteOn(ch, nt, vel);
+  }
+  void sendNoteOff(int ch, int nt, int vel) {
+    midiOut.sendNoteOff(ch, nt, vel);
+  }
+  
+  void start() {
+    midiIn = RWMidi.getInputDevices()[midiInputDevice].createInput(this);
+    printlnToAll("Started MIDI input device: " + RWMidi.getInputDevices()[midiInputDevice] );
+    midiOut = RWMidi.getOutputDevices()[midiOutputDevice].createOutput();
+    printlnToAll("Started MIDI output device: " + RWMidi.getOutputDevices()[midiOutputDevice] );
     running = true;
     status = "RUNNING";
   }
@@ -361,13 +392,19 @@ class LMMidiControl {
       }
     }
   }
-  void listMIDI() {
+  void list() {
     println("Available MIDI output devices:");
     println(RWMidi.getOutputDevices());
     println("Available MIDI input devices:");
     println(RWMidi.getInputDevices());
   }
-  
+  void sendTestNoteOn() {
+    lastTestNote = LMConstants.minor[(int)random(LMConstants.minor.length)] + 60;
+    midiOut.sendNoteOn(1,lastTestNote,90);
+  }
+  void sendTestNoteOff() {
+    midiOut.sendNoteOff(1,lastTestNote,90);
+  }
 }
 
 /*******************************
@@ -510,7 +547,7 @@ class LMDisplayBar extends LMDisplay {
     displayHeight = 8;
     value = 0f;
     barColor = color(0,255,0);
-    outlineColor = color(160);
+    outlineColor = color(4,104,154);
     maximum = 200;
     minimum = 0;
     isHorizontal = true;
