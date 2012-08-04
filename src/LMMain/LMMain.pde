@@ -20,6 +20,9 @@ static final int ARDUINO_INDEX = 0; // This is index of Serial.list() which matc
 LMMidiControl midiSystem;
 
 LMDisplayList systemStatusLog;
+
+// Beam 1
+DropdownList b1BaseNote, b1Scale, b1Mod, b1MidiChannel;
 LMDisplayBar beam1RawBar, beam1FiltBar;
 
 
@@ -30,7 +33,7 @@ void setup() {
   
   createGUI();
   
-  setupArduino();
+  // setupArduino();
   
   midiSystem = new LMMidiControl(0, 0);
   
@@ -69,7 +72,7 @@ void createGUI() {
   
   // Beam 1
   cp5.addButton("enable B1")
-    .setPosition(10,40)
+    .setPosition(10,35)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -80,7 +83,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("disable B1")
-    .setPosition(80,40)
+    .setPosition(75,35)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -91,7 +94,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("status B1")
-    .setPosition(150,40)
+    .setPosition(140,35)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -102,7 +105,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("panic B1")
-    .setPosition(220,40)
+    .setPosition(205,35)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -112,8 +115,59 @@ void createGUI() {
       }
     })
     ;
-  beam1RawBar = new LMDisplayBar(10,100);
-  beam1FiltBar = new LMDisplayBar(10, 110);
+  cp5.addButton("- octv B1")
+    .setPosition(270,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("+ octv B1")
+    .setPosition(335,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  b1BaseNote = cp5.addDropdownList("base B1")
+    .setPosition(10,70)
+    .setSize(60,170)
+    ;
+  for (int i=0; i < LMConstants.midiOffsets.length; i++) {
+    b1BaseNote.addItem(LMConstants.midiOffsets[i], i);
+  }
+  b1Scale = cp5.addDropdownList("scale B1")
+    .setPosition(75,70)
+    .setSize(60,100)
+    ;
+  b1Scale.addItem("MAJOR", 0);
+  b1Scale.addItem("MINOR", 1);
+  b1Scale.addItem("CHROMATIC", 2);
+  b1Scale.addItem("PENTATONIC", 3);
+  
+  b1Mod = cp5.addDropdownList("mod B1")
+    .setPosition(140,70)
+    .setSize(60,100)
+    ;
+  b1Mod.addItem("PORTA OFF", 0);
+  b1Mod.addItem("PORTA ON", 1);
+  b1MidiChannel = cp5.addDropdownList("channel B1")
+    .setPosition(205,70)
+    .setSize(60,120)
+    ;
+  for (int i=1; i <= 16; i++) {
+    b1MidiChannel.addItem("CH " + i, i);
+  }
+  beam1RawBar = new LMDisplayBar(10,120);
+  beam1FiltBar = new LMDisplayBar(10, 130);
   
   // MIDI
   cp5.addButton("start MIDI")
@@ -203,9 +257,13 @@ void updateGUI() {
   // Beam 1
   fill(255);
   textFont(mainFont);
-  text("BEAM 1 - HALTED", 10, 10);
+  text("BEAM 1 >> HALTED", 10, 10);
   stroke(255);
-  line(10,32,320,32);
+  line(10,29,395,29);
+  
+  fill(24,34,140); noStroke();
+  rect(10,75,120,20);
+  
   textFont(smallFont);
   // beam1RawBar.setValue(foo.raw);
   beam1RawBar.draw();
@@ -238,9 +296,30 @@ void printlnToAll(String in) {
 // MIDI input event handlers
 void noteOneReceived(Note note) {
   //
+  if (midiSystem.passthrough) {
+    midiSystem.midiOut.sendNoteOn(1, note.getPitch(), note.getVelocity());
+  }
 }
 void noteOffReceived(Note note) {
   //
+  if (midiSystem.passthrough) {
+    midiSystem.midiOut.sendNoteOff(1, note.getPitch(), note.getVelocity());
+  }
+}
+/*********************
+ * LMConstants class
+ *********************/
+static class LMConstants {
+  // Because static fields are unallowed in non-top level types.
+  static final String[] midiOffsets = {"C","C#","D","D#","E","F","F#","G","A","A#","B"};
+  // Oh my dear mayonnaise, I love this guy: http://www.grantmuller.com/MidiReference/doc/midiReference/ScaleReference.html
+  // TODO: consider switching to use enums
+  static final int[] major = {0,2,4,5,7,9,11};
+  static final int[] minor = {0,2,3,5,7,8,10};
+  static final int[] chromatic = {0,1,2,3,4,5,6,7,8,9,10,11};
+  static final int[] pentatonic = {0,2,4,7,9};
+  
+  
 }
 
 /*********************
@@ -253,6 +332,7 @@ class LMMidiControl {
   String status;
   boolean running;
   boolean passthrough; // if true, incoming midi will be echoed out
+  
   
   LMMidiControl(int in, int out) {
     midiInputDevice = in;
@@ -275,9 +355,10 @@ class LMMidiControl {
     status = "HALTED";
   }
   void panic() {
-  for (int ch=0;ch<16;ch++) {
-    for (int nt=0;nt<128;nt++) {
-        midiOut.sendNoteOff(ch,nt,63);
+    for (int ch=0;ch<16;ch++) {
+      for (int nt=0;nt<128;nt++) {
+          midiOut.sendNoteOff(ch,nt,63);
+      }
     }
   }
   void listMIDI() {
@@ -425,7 +506,7 @@ class LMDisplayBar extends LMDisplay {
   LMDisplayBar(int x, int y) {
     xPosition = x;
     yPosition = y;
-    displayWidth = 308;
+    displayWidth = 383;
     displayHeight = 8;
     value = 0f;
     barColor = color(0,255,0);
