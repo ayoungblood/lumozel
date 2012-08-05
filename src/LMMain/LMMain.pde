@@ -406,9 +406,44 @@ class LMMidiControl {
     midiOut.sendNoteOff(1,lastTestNote,90);
   }
 }
+/*******************************
+ * LMDigitalSensor class
+ *******************************/
+class LMDigitalSensor {
+  Arduino ar;
+  int pin;
+  
+  final int AVERAGE_LENGTH;
+  // TODO: Implement debounce/smoothing
+  
+  LMDigitalsensor(Arduino a, int p, int avgLen) {
+    ar = a;
+    pin = p
+    AVERAGE_LENGTH = avgLen;
+    
+  }
+  void update() {
+    // for updating debounce/smoothing routine, etc
+  }
+  boolean value() {
+    // This method returns the boolean value of the pin, assuming active-high logic, i.e. 5V == true, 0V == false
+    if (ar.digitalRead(pin) == Arduino.HIGH) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  int getPin() {
+    return pin;
+  }
+  void setPin(int p) {
+    pin = p;
+  }
+}
 
 /*******************************
- * LMAnalogSensor abstract class
+ * LMAnalogSensor class
  *******************************/
 class LMAnalogSensor {
   Arduino ar;
@@ -420,10 +455,10 @@ class LMAnalogSensor {
   float dt, RC;
   
   
-  LMAnalogSensor(Arduino a, int p, int avg) {
+  LMAnalogSensor(Arduino a, int p, int avgLen) {
     ar = a;
     pin = p;
-    AVERAGE_LENGTH = avg;
+    AVERAGE_LENGTH = avgLen;
     rawInput = new float[AVERAGE_LENGTH];
     currentIndex = 0;
     dt = 2;
