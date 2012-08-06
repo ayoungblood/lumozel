@@ -22,9 +22,10 @@ LMMidiControl midiSystem;
 LMDisplayList systemStatusLog;
 
 // Beam 1
-DropdownList b1BaseNote, b1Scale, b1Mod, b1MidiChannel;
+DropdownList b1BaseNote, b1Scale, b1Mod, b1MidiChannel, b1Presets;
 Numberbox b1DivisionsBox;
 int b1Divisions;
+LMDisplayDivs beam1Divs;
 LMDisplayBar beam1RawBar, beam1FiltBar;
 
 
@@ -69,7 +70,7 @@ void createGUI() {
   textAlign(LEFT, TOP);
   
   // Main system
-  systemStatusLog = new LMDisplayList(500,40);
+  systemStatusLog = new LMDisplayList(10,600);
   
   
   // Beam 1
@@ -167,21 +168,38 @@ void createGUI() {
   for (int i=1; i <= 16; i++) {
     b1MidiChannel.addItem("CH " + i, i);
   }
+  b1Presets = cp5.addDropdownList("presets B1")
+    .setPosition(270,70)
+    .setSize(125,100)
+    ;
+  b1Presets.addItem("C MAJ BASIC", 0);
+  b1Presets.addItem("C MIN BASIC", 1);
+  b1Presets.addItem("G PENT SPLIT", 2);
+  b1Presets.addItem("CHROMATIC NORMAL", 3);
   b1DivisionsBox = cp5.addNumberbox("b1Divisions")
-    .setPosition(11,101)
+    .setPosition(10,101)
     .setSize(29,18)
     .setValue(7)
     .setMin(1)
     .setMax(23)
     .setMultiplier(0.0625)
     .setCaptionLabel("")
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED || theEvent.getAction() == ControlP5.ACTION_RELEASEDOUTSIDE) {
+          beam1Divs.setDivs((int)b1DivisionsBox.getValue());
+          // Update beam controller divisions here
+        }
+      }
+    })
     ;
   cp5.addTextlabel("foobar")
     .setPosition(42,102)
     .setValue("DIVS")
     ;
-  beam1RawBar = new LMDisplayBar(11,131);
-  beam1FiltBar = new LMDisplayBar(11, 141);
+  beam1Divs = new LMDisplayDivs(10,122);
+  beam1RawBar = new LMDisplayBar(10,131);
+  beam1FiltBar = new LMDisplayBar(10, 141);
   
   // MIDI
   cp5.addButton("start MIDI")
@@ -259,39 +277,67 @@ void createGUI() {
 // For redrawing anything that needs to be redrawn
 void updateGUI() {
   strokeWeight(1);
-  stroke(255);
-  textFont(smallFont);
-  // Top bar
-  fill(255);
-  stroke(255);
-  text("FPS: " + nf(frameRate,3,1),10,500);
-  text("MX: " + nf(mouseX,4,0), 80, 500);
-  text("MY: " + nf(mouseY,4,0), 145, 500);
   
-  // Main system
+  // Status log, should be moved lower
   systemStatusLog.draw();
   
   // Beam 1
   fill(255);
   textFont(mainFont);
-  text("BEAM 1 >> HALTED", 10, 10);
+  text("BEAM 1 >> HALTED", 10, 10); // This needs to take its string from a beam controller
   stroke(255);
   line(10,29,395,29);
-  
+  // below 2 lines are clumsy
   fill(2,52,77); noStroke();
   rect(10,75,385,20);
   fill(255);
   textFont(smallFont);
-  text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",14,79);
+  text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",14,79); // This needs to take its string from a beam controller
   stroke(4,104,154);
   line(53,112,53,122);
-  line(10,122,395,122);
+  //line(10,122,395,122);
   
-  textFont(smallFont);
+  beam1Divs.draw();
   // beam1RawBar.setValue(foo.raw);
   beam1RawBar.draw();
   // beam1FiltBar.setValue(foo.filt);
   beam1FiltBar.draw();
+  
+  // Beam 2
+  fill(255);
+  textFont(mainFont);
+  text("BEAM 2 >> HALTED", 400, 10);
+  stroke(255);
+  line(400,29,795,29);
+  // below 2 lines are clumsy
+  fill(2,52,77); noStroke();
+  rect(400,75,395,20);
+  fill(255);
+  textFont(smallFont);
+  text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",414,79); // This needs to take its string from a beam controller
+  
+  // System stats
+  fill(255);
+  textFont(mainFont);
+  text("CORE STATUS", 800, 10);
+  stroke(255);
+  line(800,29,1000,29);
+  textFont(smallFont);
+  float lineHeight = textAscent() + textDescent();
+  text("UPDATE RT (FPS)", 800, 35);
+  text("MOUSE X", 800, 35 + lineHeight);
+  text("MOUSE Y", 800, 35 + lineHeight*2);
+  text("FRAMES", 800, 35 + lineHeight*3);
+  text("HAS FOCUS", 800, 35 + lineHeight*4);
+  text("LOCAL TIME", 800, 35 + lineHeight*5);
+  textAlign(RIGHT,TOP);
+  text(nf(frameRate,0,2), 1000, 35);
+  text(mouseX, 1000, 35 + lineHeight);
+  text(mouseY, 1000, 35 + lineHeight*2);
+  text(frameCount, 1000, 35 + lineHeight*3);
+  text(new Boolean(focused).toString().toUpperCase(), 1000, 35 + lineHeight*4);
+  text(hour() + ":" + nf(minute(),2,-1) + ":" + nf(second(),2,-1), 1000, 35 + lineHeight*5);
+  textAlign(LEFT,TOP);
   
   // MIDI Subsystem
   stroke(255);
@@ -416,10 +462,10 @@ class LMDigitalSensor {
   final int AVERAGE_LENGTH;
   // TODO: Implement debounce/smoothing
   
-  LMDigitalsensor(Arduino a, int p, int avgLen) {
+  LMDigitalSensor(Arduino a, int p, int avgLen) {
     ar = a;
-    pin = p
-    AVERAGE_LENGTH = avgLen;
+    pin = p;
+    AVERAGE_LENGTH = 10;
     
   }
   void update() {
@@ -564,6 +610,69 @@ abstract class LMDisplay {
   }
 }
 
+/**************************
+ * LMDisplayDivs class
+ **************************/
+class LMDisplayDivs extends LMDisplay {
+  private int divisions;
+  private color divsColor;
+  private color outlineColor;
+  private boolean isHorizontal;
+  private float divSpacing;
+  
+  LMDisplayDivs(int x, int y) {
+    xPosition = x;
+    yPosition = y;
+    displayWidth = 383;
+    displayHeight = 8;
+    divisions = 7;
+    divsColor = color(4,104,154);
+    outlineColor = color(4,104,154);
+    isHorizontal = true;
+    divSpacing = (float)displayWidth/(divisions+1);
+  }
+  // TODO: add support for isHorizontal = false
+  void draw() {
+    if (isHorizontal) {
+      stroke(outlineColor);
+      strokeWeight(1);
+      line(xPosition,yPosition,xPosition+displayWidth,yPosition);
+      divSpacing = (float)displayWidth/(divisions+1);
+      stroke(divsColor);
+      for (int i = 1; i <= divisions; i++) {
+        line(xPosition+(i*divSpacing),yPosition,xPosition+(i*divSpacing),yPosition+displayHeight);
+      }
+      // end caps
+      line(xPosition,yPosition,xPosition,yPosition+displayHeight);
+      line(xPosition+displayWidth,yPosition,xPosition+displayWidth,yPosition+displayHeight);
+    }
+    else {
+      // not implemented yet, do not use
+      println("Vertical divisions not supported yet!");
+    }
+  }
+  void setDivs(int d) {
+    divisions = d;
+  }
+  int getDivs() {
+    return divisions;
+  }
+  void setDivsColor(color c) {
+    divsColor = c;
+  }
+  color getDivsColor() {
+    return divsColor;
+  }
+  void setOutlineColor(color c) {
+    outlineColor = c;
+  }
+  color getOutlineColor() {
+    return outlineColor;
+  }
+  
+  
+}
+  
 /********************
  * LMDisplayBar class
  ********************/

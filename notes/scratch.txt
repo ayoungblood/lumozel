@@ -46,6 +46,8 @@ Section for MIDI
 
 Use 10px spacing for UI
 
+To implement later: Add support for non-linear spacing
+
 Two different capacitive touch sensing implementations:
 
 Via amagill:
