@@ -30,6 +30,8 @@ whatever MIDI library we end up using
 Exception catching needs to be much more heavily implemented.
 Some exceptions are best handled by waiting 1000ms and trying once again.
 
+This mess could probably be cleaned up with a couple interfaces.
+
 Terms:
 Beam - meaning the aggregate sensor, composed of laser/photodiode pair and IR ranger
 

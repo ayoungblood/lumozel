@@ -17,8 +17,12 @@ PFont mainFont, smallFont;
 Arduino arduino;
 static final int ARDUINO_INDEX = 0; // This is index of Serial.list() which matches the Arduino, typically /dev/tty.usbserial-*
 
+// MIDI
 LMMidiControl midiSystem;
+int midiX = 10, midiY = 160; // This makes moving around the entire MIDI GUI section much easier
+DropdownList midiInputList, midiOutputList;
 
+// SYS
 LMDisplayList systemStatusLog;
 
 // Beam 1
@@ -28,6 +32,12 @@ int b1Divisions;
 LMDisplayDivs beam1Divs;
 LMDisplayBar beam1RawBar, beam1FiltBar;
 
+// Beam 2
+DropdownList b2BaseNote, b2Scale, b2Mod, b2MidiChannel, b2Presets;
+Numberbox b2DivisionsBox;
+int b2Divisions;
+LMDisplayDivs beam2Divs;
+LMDisplayBar beam2RawBar, beam2FiltBar;
 
 void setup() {
   size(1024,768,P2D); // Using the P2D renderer because it is fast. Fast renderer = better response. TODO: resize window
@@ -45,7 +55,7 @@ void setup() {
 void draw() {
   background(0);
   updateGUI();
-  
+  midiSystem.stop();
   cp5.draw(); // Necessary because of the P2D renderer
 }
 
@@ -73,7 +83,7 @@ void createGUI() {
   systemStatusLog = new LMDisplayList(10,600);
   
   
-  // Beam 1
+  // Beam 1 ----------------------------------------------------------------------***********************
   cp5.addButton("enable B1")
     .setPosition(10,35)
     .setSize(60,20)
@@ -193,7 +203,7 @@ void createGUI() {
       }
     })
     ;
-  cp5.addTextlabel("foobar")
+  cp5.addTextlabel("b1DivsLabel")
     .setPosition(42,102)
     .setValue("DIVS")
     ;
@@ -201,9 +211,138 @@ void createGUI() {
   beam1RawBar = new LMDisplayBar(10,131);
   beam1FiltBar = new LMDisplayBar(10, 141);
   
-  // MIDI
+  // Beam 2 ----------------------------------------------------------------------***********************
+  cp5.addButton("enable B2")
+    .setPosition(400,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("disable B2")
+    .setPosition(465,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("status B2")
+    .setPosition(530,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("panic B2")
+    .setPosition(595,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("- octv B2")
+    .setPosition(660,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("+ octv B2")
+    .setPosition(725,35)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  b2BaseNote = cp5.addDropdownList("base B2")
+    .setPosition(400,70)
+    .setSize(60,170)
+    ;
+  for (int i=0; i < LMConstants.midiOffsets.length; i++) {
+    b2BaseNote.addItem(LMConstants.midiOffsets[i], i);
+  }
+  b2Scale = cp5.addDropdownList("scale B2")
+    .setPosition(465,70)
+    .setSize(60,100)
+    ;
+  b2Scale.addItem("MAJOR", 0);
+  b2Scale.addItem("MINOR", 1);
+  b2Scale.addItem("CHROMATIC", 2);
+  b2Scale.addItem("PENTATONIC", 3);
+  b2Mod = cp5.addDropdownList("mod B2")
+    .setPosition(530,70)
+    .setSize(60,100)
+    ;
+  b2Mod.addItem("PORTA OFF", 0);
+  b2Mod.addItem("PORTA ON", 1);
+  b2MidiChannel = cp5.addDropdownList("channel B2")
+    .setPosition(595,70)
+    .setSize(60,120)
+    ;
+  for (int i=1; i <= 16; i++) {
+    b2MidiChannel.addItem("CH " + i, i);
+  }
+  b2Presets = cp5.addDropdownList("presets B2")
+    .setPosition(660,70)
+    .setSize(125,100)
+    ;
+  b2Presets.addItem("C MAJ BASIC", 0);
+  b2Presets.addItem("C MIN BASIC", 1);
+  b2Presets.addItem("G PENT SPLIT", 2);
+  b2Presets.addItem("CHROMATIC NORMAL", 3);
+  b2DivisionsBox = cp5.addNumberbox("b2Divisions")
+    .setPosition(400,101)
+    .setSize(29,18)
+    .setValue(7)
+    .setMin(1)
+    .setMax(23)
+    .setMultiplier(0.0625)
+    .setCaptionLabel("")
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED || theEvent.getAction() == ControlP5.ACTION_RELEASEDOUTSIDE) {
+          beam2Divs.setDivs((int)b2DivisionsBox.getValue());
+          // Update beam controller divisions here
+        }
+      }
+    })
+    ;
+  cp5.addTextlabel("b2DivsLabel")
+    .setPosition(432,102)
+    .setValue("DIVS")
+    ;
+  beam2Divs = new LMDisplayDivs(400,122);
+  beam2RawBar = new LMDisplayBar(400,131);
+  beam2FiltBar = new LMDisplayBar(400, 141);
+  
+  
+  // MIDI ----------------------------------------------------------------------***********************
   cp5.addButton("start MIDI")
-    .setPosition(10,360)
+    .setPosition(midiX,midiY+25)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -214,7 +353,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("stop MIDI")
-    .setPosition(80,360)
+    .setPosition(midiX+65,midiY+25)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -225,7 +364,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("panic MIDI")
-    .setPosition(150,360)
+    .setPosition(midiX+130,midiY+25)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -236,7 +375,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("list MIDI")
-    .setPosition(220,360)
+    .setPosition(midiX+195,midiY+25)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -247,7 +386,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("test MIDI")
-    .setPosition(10,390)
+    .setPosition(midiX+260,midiY+25)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -261,7 +400,7 @@ void createGUI() {
     })
     ;
   cp5.addButton("status MIDI")
-    .setPosition(80,390)
+    .setPosition(midiX+325,midiY+25)
     .setSize(60,20)
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -271,8 +410,38 @@ void createGUI() {
       }
     })
     ;
-  
-  
+  midiInputList = cp5.addDropdownList("MIDI INPUT DEVICE")
+    .setPosition(midiX, midiY+60)
+    .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        println((int)theEvent.getValue());
+        // TODO: update midiSystem.input here
+      }
+    })
+    ;
+  for (int i=0; i < RWMidi.getInputDevices().length; i++) {
+    String s = i+" "+RWMidi.getInputDevices()[i].toString();
+    if (s.length() > 24) {s = s.substring(0,24);}
+    midiInputList.addItem(s, i);
+  }
+  // TODO: set value of input list, via init value of midiSystem
+  midiOutputList = cp5.addDropdownList("MIDI OUTPUT DEVICE")
+    .setPosition(midiX+130, midiY+60)
+    .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        println((int)theEvent.getValue());
+        // TODO: update midiSystem.output here
+      }
+    })
+    ;
+  for (int i=0; i < RWMidi.getOutputDevices().length; i++) {
+    String s = i+" "+RWMidi.getOutputDevices()[i].toString();
+    if (s.length() > 24) {s = s.substring(0,24);}
+    midiOutputList.addItem(s, i);
+  }
+  // TODO: set value of output list, via init value of midiSystem
 }
 // For redrawing anything that needs to be redrawn
 void updateGUI() {
@@ -315,6 +484,13 @@ void updateGUI() {
   fill(255);
   textFont(smallFont);
   text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",414,79); // This needs to take its string from a beam controller
+  stroke(4,104,154);
+  line(443,112,443,122);
+  beam2Divs.draw();
+  // beam1RawBar.setValue(foo.raw);
+  beam2RawBar.draw();
+  // beam1FiltBar.setValue(foo.filt);
+  beam2FiltBar.draw();
   
   // System stats
   fill(255);
@@ -340,11 +516,12 @@ void updateGUI() {
   textAlign(LEFT,TOP);
   
   // MIDI Subsystem
-  stroke(255);
-  line(10,350,320,350);
   textFont(mainFont);
   fill(255);
-  text("MIDI >> " + midiSystem.status, 10, 330);
+  text("MIDI >> " + midiSystem.status, midiX+2, midiY);
+  stroke(255);
+  line(midiX,midiY+19,midiX+385,midiY+19);
+  
 }
 
 void setupArduino() {
@@ -376,6 +553,77 @@ void noteOffReceived(Note note) {
   }
 }
 /*********************
+ * LMBeamControl class
+ *********************/
+class LMBeamControl {
+  int divs;
+  int base;
+  int[] currScale;
+  String status;
+  String info;
+  boolean enabled;
+  int channel;
+  int velocity;
+  
+  LMBeamControl() {
+    enabled = false;
+    status = "DISABLED";
+    info = "SCALE: " + "foo" + " OCTV: " + "bar" + " BASE: " + base + " CHAN: " + channel ;
+    channel = 1;
+    velocity = 90;
+    currScale = LMConstants.major;
+    base = 60;
+    divs = 7; // fix this, perhaps constructor arg, needs to match UI value at init
+  }
+  void octaveUp() {
+    base += 12;
+  }
+  void octaveDn() {
+    base -= 12;
+  }
+  void setOctave(int oct) {
+    base = oct*12 + 12;
+  }
+  int getOctave() {
+    return (base-12)/12;
+    // TODO: THIS NEEDS FIXING. It does not work for base notes that are not C
+  }
+  void setBase(int nt) {
+    base = nt;
+  }
+  int getBase() {
+    return base;
+  }
+  void setChannel(int ch) {
+    channel = ch;
+    // TODO: update MidiControl here
+  }
+  int getChannel() {
+    return channel;
+  }
+  void enable() {
+    enabled = true;
+  }
+  void disable() {
+    enabled = false;
+    // TODO: probably need panic here
+  }
+ String getStatus() {
+    return status;
+  }
+  void setScale(int[] scl) {
+    currScale = scl;
+  }
+  int[] getScale() {
+    return currScale;
+  }
+  void panic() {
+    // TODO: implement
+  }
+  
+}
+  
+/*********************
  * LMConstants class
  *********************/
 static class LMConstants {
@@ -387,10 +635,7 @@ static class LMConstants {
   static final int[] minor = {0,2,3,5,7,8,10};
   static final int[] chromatic = {0,1,2,3,4,5,6,7,8,9,10,11};
   static final int[] pentatonic = {0,2,4,7,9};
-  
-  
 }
-
 /*********************
  * LMMidiControl class
  *********************/
@@ -410,7 +655,6 @@ class LMMidiControl {
     status = "HALTED";
     start();
   }
-  
   void sendNoteOn(int ch, int nt, int vel) {
     midiOut.sendNoteOn(ch, nt, vel);
   }
@@ -426,12 +670,14 @@ class LMMidiControl {
     running = true;
     status = "RUNNING";
   }
-  void stop() {
+  void stop() { // Hammertime!
     midiOut.closeMidi();
     running = false;
     status = "HALTED";
   }
   void panic() {
+    // TODO: this needs to check that there is an open output, i.e. the output has not been closed/destroyed
+    // Another option would be to use a try/catch, and simply dump the catch, however unethical that may be..
     for (int ch=0;ch<16;ch++) {
       for (int nt=0;nt<128;nt++) {
           midiOut.sendNoteOff(ch,nt,63);
@@ -445,10 +691,12 @@ class LMMidiControl {
     println(RWMidi.getInputDevices());
   }
   void sendTestNoteOn() {
+    // TODO: this needs to check that there is an open output, i.e. the output has not been closed/destroyed
     lastTestNote = LMConstants.minor[(int)random(LMConstants.minor.length)] + 60;
     midiOut.sendNoteOn(1,lastTestNote,90);
   }
   void sendTestNoteOff() {
+    // TODO: this needs to check that there is an open output, i.e. the output has not been closed/destroyed
     midiOut.sendNoteOff(1,lastTestNote,90);
   }
 }
@@ -554,7 +802,9 @@ class LMAnalogSensor {
     pin = p;
   }
 }
-
+/**************************
+ * LMGPSensor class
+ **************************/
 class LMGPSensor extends LMAnalogSensor {
   
   LMGPSensor(Arduino a, int p, int avg) {
@@ -624,7 +874,7 @@ class LMDisplayDivs extends LMDisplay {
     xPosition = x;
     yPosition = y;
     displayWidth = 383;
-    displayHeight = 8;
+    displayHeight = 6;
     divisions = 7;
     divsColor = color(4,104,154);
     outlineColor = color(4,104,154);
@@ -702,6 +952,7 @@ class LMDisplayBar extends LMDisplay {
       fill(0);
       stroke(outlineColor);
       rect(xPosition,yPosition, displayWidth, displayHeight);
+      point(xPosition+displayWidth, yPosition + displayHeight); // thisisbecausetherectangledoesntwork.seriously.
       fill(barColor);
       noStroke();
       rect(xPosition+1, yPosition+1, map(constrain(value,minimum,maximum), minimum, maximum, 0, displayWidth-1), displayHeight-1);
@@ -711,6 +962,7 @@ class LMDisplayBar extends LMDisplay {
       fill(0);
       stroke(outlineColor);
       rect(xPosition,yPosition, displayWidth, displayHeight);
+      // point(xPosition+displayWidth, yPosition + displayHeight); not sure if needed
       fill(barColor);
       noStroke();
       rect(xPosition+1, yPosition+1, displayWidth-1, map(constrain(value,minimum,maximum), minimum, maximum, 0, displayHeight-1));
