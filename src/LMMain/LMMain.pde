@@ -2,6 +2,8 @@ import cc.arduino.*;
 import processing.serial.*;
 import controlP5.*;
 import rwmidi.*;
+import oscP5.*;
+import netP5.*;
 
 /****************************************************************************\
  * Main Lumozel Software Interface
@@ -21,6 +23,9 @@ static final int ARDUINO_INDEX = 0; // This is index of Serial.list() which matc
 LMMidiControl midiSystem;
 int midiX = 10, midiY = 160; // This makes moving around the entire MIDI GUI section much easier
 DropdownList midiInputList, midiOutputList;
+
+// OSC
+int oscX = 400, oscY = 160;
 
 // SYS
 LMDisplayList systemStatusLog;
@@ -442,6 +447,92 @@ void createGUI() {
     midiOutputList.addItem(s, i);
   }
   // TODO: set value of output list, via init value of midiSystem
+  
+  // OSC ----------------------------------------------------------------------***********************
+  cp5.addButton("start OSC")
+    .setPosition(oscX,oscY+25)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("stop OSC")
+    .setPosition(oscX+65,oscY+25)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("flush OSC")
+    .setPosition(oscX+130,oscY+25)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addButton("status OSC")
+    .setPosition(oscX+195,oscY+25)
+    .setSize(60,20)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          //
+        }
+      }
+    })
+    ;
+  cp5.addTextfield("server IP")
+    .setPosition(oscX+1, oscY+50)
+    .setSize(83,18)
+    ;
+  cp5.addTextfield("server port")
+    .setPosition(oscX+90, oscY+50)
+    .setSize(55,18)
+    ;
+  cp5.addButton("set server port")
+    .setCaptionLabel("<< set")
+    .setPosition(oscX+150, oscY+50)
+    .setSize(40,18)
+    ;
+  cp5.addTextfield("client 1 IP")
+    .setPosition(oscX+1, oscY+85)
+    .setSize(83,18)
+    ;
+  cp5.addTextfield("client 1 port")
+    .setPosition(oscX+90, oscY+85)
+    .setSize(55,18)
+    ;
+  cp5.addButton("set client 1")
+    .setCaptionLabel("<< set")
+    .setPosition(oscX+150, oscY+85)
+    .setSize(40,18)
+    ;
+  cp5.addTextfield("client 2 IP")
+    .setPosition(oscX+1, oscY+120)
+    .setSize(83,18)
+    ;
+  cp5.addTextfield("client 2 port")
+    .setPosition(oscX+90, oscY+120)
+    .setSize(55,18)
+    ;
+  cp5.addButton("set client 2")
+    .setCaptionLabel("<< set")
+    .setPosition(oscX+150, oscY+120)
+    .setSize(40,18)
+    ;
+  
 }
 // For redrawing anything that needs to be redrawn
 void updateGUI() {
@@ -477,10 +568,10 @@ void updateGUI() {
   textFont(mainFont);
   text("BEAM 2 >> HALTED", 400, 10);
   stroke(255);
-  line(400,29,795,29);
+  line(400,29,785,29);
   // below 2 lines are clumsy
   fill(2,52,77); noStroke();
-  rect(400,75,395,20);
+  rect(400,75,385,20);
   fill(255);
   textFont(smallFont);
   text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",414,79); // This needs to take its string from a beam controller
@@ -522,6 +613,10 @@ void updateGUI() {
   stroke(255);
   line(midiX,midiY+19,midiX+385,midiY+19);
   
+  // OSC Subsystem
+  text("OSC >> " + "TODO ", oscX+2, oscY);
+  line(oscX,oscY+19,oscX+385,oscY+19);
+  
 }
 
 void setupArduino() {
@@ -550,6 +645,11 @@ void noteOffReceived(Note note) {
   //
   if (midiSystem.passthrough) {
     midiSystem.midiOut.sendNoteOff(1, note.getPitch(), note.getVelocity());
+  }
+}
+class LMOsc extends OscP5 {
+  LMOsc(Object p, int rxp) {
+    super(p, rxp);
   }
 }
 /*********************
@@ -622,7 +722,32 @@ class LMBeamControl {
   }
   
 }
-  
+class LMOscClient extends NetAddress {
+  private String address;
+  private int port;
+  // TODO: this whole class is broken, class needs to reinstantiate itself after addr/prt changed
+  LMOscClient(String addr, int prt) {
+    super(addr, prt);
+    address = addr;
+    port = prt;
+  }
+  void setAddress(String addr) {
+    address = addr;
+  }
+  String getAddress() {
+    return address;
+  }
+  void setPort(int prt) {
+    port = prt;
+  }
+  int getPort() {
+    return port;
+  }
+  void set(String addr, int prt) {
+    address = addr;
+    port = prt;
+  }
+}
 /*********************
  * LMConstants class
  *********************/

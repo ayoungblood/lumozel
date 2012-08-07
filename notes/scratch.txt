@@ -32,6 +32,8 @@ Some exceptions are best handled by waiting 1000ms and trying once again.
 
 This mess could probably be cleaned up with a couple interfaces.
 
+NetAddress wrapper (LMOscClient) needs to be fixed
+
 Terms:
 Beam - meaning the aggregate sensor, composed of laser/photodiode pair and IR ranger
 
