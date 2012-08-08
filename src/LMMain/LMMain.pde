@@ -22,10 +22,10 @@ static final int ARDUINO_INDEX = 0; // This is index of Serial.list() which matc
 // MIDI
 LMMidiControl midiSystem;
 int midiX = 10, midiY = 160; // This makes moving around the entire MIDI GUI section much easier
-DropdownList midiInputList, midiOutputList;
+DropdownList midiInputList, midiOutputList, ptChList;
 
 // OSC
-int oscX = 400, oscY = 160;
+int oscX = 400, oscY = 160; // Facilitates moving the GUI lump around
 
 // SYS
 LMDisplayList systemStatusLog;
@@ -54,23 +54,23 @@ void setup() {
   // setupArduino();
   
   midiSystem = new LMMidiControl(2, 3);
-  
+
 }
 
 void draw() {
   background(0);
   updateGUI();
-  midiSystem.stop();
+
   cp5.draw(); // Necessary because of the P2D renderer
 }
 
 // Overriding the P5 exit method, because we need to shut down all modules properly.
 void exit() {
   println( millis() + ": Exiting...");
-  
+  midiSystem.stop();
   // System
   super.stop();
-  println( millis() + ": super.stop() called. User must destroy window.");
+  System.exit(0); // This is needed because it destroys the window. super.stop() does not destroy the window
 }
 
 // GUI creation, ControlP5 initialization, and font setup
@@ -95,7 +95,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -106,7 +106,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -117,7 +117,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -128,7 +128,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -139,7 +139,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -150,7 +150,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -223,7 +223,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -234,7 +234,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -245,7 +245,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -256,7 +256,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -267,7 +267,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -278,7 +278,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          // TODO
         }
       }
     })
@@ -331,7 +331,7 @@ void createGUI() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED || theEvent.getAction() == ControlP5.ACTION_RELEASEDOUTSIDE) {
           beam2Divs.setDivs((int)b2DivisionsBox.getValue());
-          // Update beam controller divisions here
+          // TODO: Update beam controller divisions here
         }
       }
     })
@@ -352,7 +352,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          midiSystem.start();
         }
       }
     })
@@ -363,7 +363,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          midiSystem.stop();
         }
       }
     })
@@ -447,7 +447,19 @@ void createGUI() {
     midiOutputList.addItem(s, i);
   }
   // TODO: set value of output list, via init value of midiSystem
-  
+  ptChList = cp5.addDropdownList("ECHO CH")
+    .setPosition(midiX+325, midiY+60)
+    .setSize(60,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        println((int)theEvent.getValue());
+        // TODO: update midiSystem.setPassthroughChannel here
+      }
+    })
+    ;
+  for (int i=1; i < 17; i ++) {
+    ptChList.addItem("CH " + i, i);
+  }
   // OSC ----------------------------------------------------------------------***********************
   cp5.addButton("start OSC")
     .setPosition(oscX,oscY+25)
@@ -634,17 +646,17 @@ void printlnToAll(String in) {
   systemStatusLog.addLine(in);
 }
 
-// MIDI input event handlers
+// MIDI input event callback
 void noteOneReceived(Note note) {
-  //
+  // INPUT HANDLING HERE
   if (midiSystem.passthrough) {
-    midiSystem.midiOut.sendNoteOn(1, note.getPitch(), note.getVelocity());
+    midiSystem.midiOut.sendNoteOn(midiSystem.getPassthroughChannel(), note.getPitch(), note.getVelocity());
   }
 }
 void noteOffReceived(Note note) {
-  //
+  // INPUT HANDLING HERE
   if (midiSystem.passthrough) {
-    midiSystem.midiOut.sendNoteOff(1, note.getPitch(), note.getVelocity());
+    midiSystem.midiOut.sendNoteOff(midiSystem.getPassthroughChannel(), note.getPitch(), note.getVelocity());
   }
 }
 class LMOsc extends OscP5 {
@@ -664,8 +676,10 @@ class LMBeamControl {
   boolean enabled;
   int channel;
   int velocity;
+  LMMidiControl midi;
   
-  LMBeamControl() {
+  LMBeamControl(LMMidiControl mc) {
+    midi = mc;
     enabled = false;
     status = "DISABLED";
     info = "SCALE: " + "foo" + " OCTV: " + "bar" + " BASE: " + base + " CHAN: " + channel ;
@@ -696,7 +710,6 @@ class LMBeamControl {
   }
   void setChannel(int ch) {
     channel = ch;
-    // TODO: update MidiControl here
   }
   int getChannel() {
     return channel;
@@ -706,7 +719,7 @@ class LMBeamControl {
   }
   void disable() {
     enabled = false;
-    // TODO: probably need panic here
+    panic();
   }
  String getStatus() {
     return status;
@@ -718,10 +731,16 @@ class LMBeamControl {
     return currScale;
   }
   void panic() {
-    // TODO: implement
+    // This is a less powerful panic than LMMidiControl.panic(), as it only panics the current channel
+    for (int nt=0;nt<128;nt++) {
+        midi.midiOut.sendNoteOff(channel,nt,63);
+    }
   }
   
 }
+/*********************
+ * LMOscClient class
+ *********************/
 class LMOscClient extends NetAddress {
   private String address;
   private int port;
@@ -771,6 +790,7 @@ class LMMidiControl {
   String status;
   boolean running;
   boolean passthrough; // if true, incoming midi will be echoed out
+  int passthroughChannel; // the channel that incoming midi will be echoed out with
   int lastTestNote;
   
   LMMidiControl(int in, int out) {
@@ -781,31 +801,45 @@ class LMMidiControl {
     start();
   }
   void sendNoteOn(int ch, int nt, int vel) {
-    midiOut.sendNoteOn(ch, nt, vel);
+    if (running) {
+      midiOut.sendNoteOn(ch, nt, vel);
+    }
   }
   void sendNoteOff(int ch, int nt, int vel) {
-    midiOut.sendNoteOff(ch, nt, vel);
+    if (running) {
+      midiOut.sendNoteOff(ch, nt, vel);
+    }
   }
-  
   void start() {
-    midiIn = RWMidi.getInputDevices()[midiInputDevice].createInput(this);
-    printlnToAll("Started MIDI input device: " + RWMidi.getInputDevices()[midiInputDevice] );
-    midiOut = RWMidi.getOutputDevices()[midiOutputDevice].createOutput();
-    printlnToAll("Started MIDI output device: " + RWMidi.getOutputDevices()[midiOutputDevice] );
+    try {
+      midiIn = RWMidi.getInputDevices()[midiInputDevice].createInput(this);
+      printlnToAll("Started MIDI input device: " + RWMidi.getInputDevices()[midiInputDevice] );
+    } catch(Exception e) {
+      e.printStackTrace();
+      printlnToAll("Failed to instantiate MIDI input device, device does not exist.");
+    }
+    try {
+      midiOut = RWMidi.getOutputDevices()[midiOutputDevice].createOutput();
+      printlnToAll("Started MIDI output device: " + RWMidi.getOutputDevices()[midiOutputDevice] );
+    } catch(Exception e) {
+      e.printStackTrace();
+      printlnToAll("Failed to instantiate MIDI output device, device does not exist.");
+    }
     running = true;
     status = "RUNNING";
   }
   void stop() { // Hammertime!
+    panic();
     midiOut.closeMidi();
     running = false;
     status = "HALTED";
   }
   void panic() {
-    // TODO: this needs to check that there is an open output, i.e. the output has not been closed/destroyed
-    // Another option would be to use a try/catch, and simply dump the catch, however unethical that may be..
-    for (int ch=0;ch<16;ch++) {
-      for (int nt=0;nt<128;nt++) {
-          midiOut.sendNoteOff(ch,nt,63);
+    if (running) {
+      for (int ch=0;ch<16;ch++) {
+        for (int nt=0;nt<128;nt++) {
+            midiOut.sendNoteOff(ch,nt,63);
+        }
       }
     }
   }
@@ -816,13 +850,21 @@ class LMMidiControl {
     println(RWMidi.getInputDevices());
   }
   void sendTestNoteOn() {
-    // TODO: this needs to check that there is an open output, i.e. the output has not been closed/destroyed
-    lastTestNote = LMConstants.minor[(int)random(LMConstants.minor.length)] + 60;
-    midiOut.sendNoteOn(1,lastTestNote,90);
+    if (running) {
+      lastTestNote = LMConstants.minor[(int)random(LMConstants.minor.length)] + 60;
+      midiOut.sendNoteOn(1,lastTestNote,90);
+    }
   }
   void sendTestNoteOff() {
-    // TODO: this needs to check that there is an open output, i.e. the output has not been closed/destroyed
-    midiOut.sendNoteOff(1,lastTestNote,90);
+    if (running) {
+      midiOut.sendNoteOff(1,lastTestNote,90);
+    }
+  }
+  void setPassthroughChannel(int i) {
+    passthroughChannel = constrain(i,1,16);
+  }
+  int getPassthroughChannel() {
+    return passthroughChannel;
   }
 }
 /*******************************
