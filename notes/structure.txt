@@ -77,8 +77,9 @@ LMBeamControl (stores beam divisions, MIDI note range, octv info, etc)
 LMAnalogSensor (simple analog sensor class, with averaging)
     LMGPSensor (for Sharp GP sensor)
 LMDigitalSensor (simple digital sensor)
-    LMTouchSensor (for touch sensor)
+
     LMLaserSensor (for phototransistor)
+LMTouchSensor (for touch sensor, cannot inherit from LMDigitalSensor, as it needs read/write)
 LMTouchSensorThread (perhaps implemented as an inner class of LMTouchSensor)
 LMFFTDisplay (wait to implement this, audio is 2nd priority)
 

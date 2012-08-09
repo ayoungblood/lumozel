@@ -26,6 +26,7 @@ DropdownList midiInputList, midiOutputList, ptChList;
 
 // OSC
 int oscX = 400, oscY = 160; // Facilitates moving the GUI lump around
+Textfield serverPortField, client1IPField, client1PortField, client2IPField, client2PortField;
 
 // SYS
 LMDisplayList systemStatusLog;
@@ -49,11 +50,13 @@ void setup() {
   smooth();
   frameRate(480);
   
+  midiSystem = new LMMidiControl(2, 3);
+  
   createGUI();
   
   // setupArduino();
   
-  midiSystem = new LMMidiControl(2, 3);
+  
 
 }
 
@@ -86,6 +89,7 @@ void createGUI() {
   
   // Main system
   systemStatusLog = new LMDisplayList(10,600);
+  systemStatusLog.setWidth(380);
   
   
   // Beam 1 ----------------------------------------------------------------------***********************
@@ -460,6 +464,8 @@ void createGUI() {
   for (int i=1; i < 17; i ++) {
     ptChList.addItem("CH " + i, i);
   }
+  midiSystem.midiLog.setPosition(midiX,midiY+62);
+  
   // OSC ----------------------------------------------------------------------***********************
   cp5.addButton("start OSC")
     .setPosition(oscX,oscY+25)
@@ -508,8 +514,15 @@ void createGUI() {
   cp5.addTextfield("server IP")
     .setPosition(oscX+1, oscY+50)
     .setSize(83,18)
+    .setText("127.0.0.1") // TODO: fill in server IP here
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        Textfield c = (Textfield)theEvent.getController();
+        c.setText("127.0.0.1"); // TODO: fill in server IP here
+      }
+    })
     ;
-  cp5.addTextfield("server port")
+  serverPortField = cp5.addTextfield("server port")
     .setPosition(oscX+90, oscY+50)
     .setSize(55,18)
     ;
@@ -517,12 +530,19 @@ void createGUI() {
     .setCaptionLabel("<< set")
     .setPosition(oscX+150, oscY+50)
     .setSize(40,18)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          // TODO
+        }
+      }
+    })
     ;
-  cp5.addTextfield("client 1 IP")
+  client1IPField = cp5.addTextfield("client 1 IP")
     .setPosition(oscX+1, oscY+85)
     .setSize(83,18)
     ;
-  cp5.addTextfield("client 1 port")
+  client1PortField = cp5.addTextfield("client 1 port")
     .setPosition(oscX+90, oscY+85)
     .setSize(55,18)
     ;
@@ -530,12 +550,19 @@ void createGUI() {
     .setCaptionLabel("<< set")
     .setPosition(oscX+150, oscY+85)
     .setSize(40,18)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          // TODO
+        }
+      }
+    })
     ;
-  cp5.addTextfield("client 2 IP")
+  client2IPField = cp5.addTextfield("client 2 IP")
     .setPosition(oscX+1, oscY+120)
     .setSize(83,18)
     ;
-  cp5.addTextfield("client 2 port")
+  client2PortField = cp5.addTextfield("client 2 port")
     .setPosition(oscX+90, oscY+120)
     .setSize(55,18)
     ;
@@ -543,6 +570,13 @@ void createGUI() {
     .setCaptionLabel("<< set")
     .setPosition(oscX+150, oscY+120)
     .setSize(40,18)
+    .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          // TODO
+        }
+      }
+    })
     ;
   
 }
@@ -624,6 +658,7 @@ void updateGUI() {
   text("MIDI >> " + midiSystem.status, midiX+2, midiY);
   stroke(255);
   line(midiX,midiY+19,midiX+385,midiY+19);
+  midiSystem.midiLog.draw();
   
   // OSC Subsystem
   text("OSC >> " + "TODO ", oscX+2, oscY);
@@ -643,7 +678,11 @@ void setupArduino() {
 
 void printlnToAll(String in) {
   println(in);
-  systemStatusLog.addLine(in);
+  try {
+    systemStatusLog.addLine(in);
+  } catch (Exception ex) {
+    // No one cares
+  }
 }
 
 // MIDI input event callback
@@ -660,8 +699,8 @@ void noteOffReceived(Note note) {
   }
 }
 class LMOsc extends OscP5 {
-  LMOsc(Object p, int rxp) {
-    super(p, rxp);
+  LMOsc(Object parent, int rxPort) {
+    super(parent, rxPort);
   }
 }
 /*********************
@@ -792,12 +831,15 @@ class LMMidiControl {
   boolean passthrough; // if true, incoming midi will be echoed out
   int passthroughChannel; // the channel that incoming midi will be echoed out with
   int lastTestNote;
+  LMDisplayList midiLog;
   
   LMMidiControl(int in, int out) {
     midiInputDevice = in;
     midiOutputDevice = out;
     running = false;
     status = "HALTED";
+    midiLog = new LMDisplayList(0,0);
+    midiLog.setWidth(255);
     start();
   }
   void sendNoteOn(int ch, int nt, int vel) {
@@ -827,12 +869,14 @@ class LMMidiControl {
     }
     running = true;
     status = "RUNNING";
+    midiLog.addLine((int)millis() + ": MIDI started");
   }
   void stop() { // Hammertime!
     panic();
     midiOut.closeMidi();
     running = false;
     status = "HALTED";
+    midiLog.addLine((int)millis() + ": MIDI halted");
   }
   void panic() {
     if (running) {
@@ -841,6 +885,10 @@ class LMMidiControl {
             midiOut.sendNoteOff(ch,nt,63);
         }
       }
+      midiLog.addLine((int)millis() + ": MIDI panicked");
+    }
+    else {
+      midiLog.addLine((int)millis() + ": MIDI not running");
     }
   }
   void list() {
@@ -853,6 +901,7 @@ class LMMidiControl {
     if (running) {
       lastTestNote = LMConstants.minor[(int)random(LMConstants.minor.length)] + 60;
       midiOut.sendNoteOn(1,lastTestNote,90);
+      midiLog.addLine((int)millis() + ": MIDI test note: " + lastTestNote);
     }
   }
   void sendTestNoteOff() {
@@ -1177,10 +1226,6 @@ class LMDisplayBar extends LMDisplay {
  * LMDisplayList class
  *********************/
 class LMDisplayList extends LMDisplay {
-  private int xPos;
-  private int yPos;
-  private int displayWidth;
-  private int displayHeight;
   private String[] contents;
   private int contentsPointer;
   private color textColor;
@@ -1190,8 +1235,9 @@ class LMDisplayList extends LMDisplay {
     yPosition = y;
     displayWidth = 160;
     displayHeight = 80;
-    // TODO: Set list contents length based on displayHeight/line height
-    contents = new String[5];
+    float lineHeight = textAscent() + textDescent(); // determine line height
+    int contentsLength = floor((displayHeight-lineHeight)/lineHeight); // determine how many line can fit in the requested display height
+    contents = new String[contentsLength];
     for (int i=0; i < contents.length; i++) {
       contents[i] = "";
     }
@@ -1202,16 +1248,25 @@ class LMDisplayList extends LMDisplay {
     fill(textColor);
     textFont(smallFont);
     for (int i=0; i < contents.length; i++) {
-      // TODO: Truncate string length if pixel length is greater than displayWidth
-      text(contents[i], xPosition+2, yPosition + (textDescent()+textAscent())*(i+1)-textAscent()-1);
+      if (textWidth(contents[i]) > displayWidth) {
+        // Here be magic.
+        float diff = textWidth(contents[i]) - displayWidth;
+        float charWidth = textWidth("Q");
+        int charsToNuke = ceil(diff/charWidth);
+        String shorter = contents[i].substring(0,contents[i].length()-charsToNuke-1);
+        text(shorter, xPosition+2, yPosition + (textDescent()+textAscent())*(i+1)-textAscent()-1);
+      }
+      else {
+        text(contents[i], xPosition+2, yPosition + (textDescent()+textAscent())*(i+1)-textAscent()-1);
+      }
     }
   }
   void addLine(String s) {
-    contents[contentsPointer] = s;
-    contentsPointer ++;
-    if (contentsPointer > contents.length-1) {
-      contentsPointer = 0;
+    // TODO: THIS IS MUCH BROKEN. needs circular arrayList fix or something..
+    for (int i=0; i < contents.length-1; i ++) {
+      contents[i] = contents[i+1];
     }
+    contents[contents.length-1] = s;
   }
   String getLine(int index) {
     return contents[index];
