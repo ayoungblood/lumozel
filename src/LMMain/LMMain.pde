@@ -28,13 +28,14 @@ int midiX = 10, midiY = 180; // This makes moving around the entire MIDI GUI sec
 DropdownList midiInputList, midiOutputList, ptChList;
 
 // OSC
-int oscX = 400, oscY = 160; // Facilitates moving the GUI lump around
+int oscX = 400, oscY = 180; // Facilitates moving the GUI lump around
 Textfield serverPortField, client1IPField, client1PortField, client2IPField, client2PortField;
 
 // SYS
 LMDisplayList systemStatusLog;
 
 // Beam 1
+LMBeamControl beam1Control;
 DropdownList b1BaseNote, b1Scale, b1Mod, b1MidiChannel, b1Presets;
 Numberbox b1DivisionsBox;
 int b1Divisions;
@@ -46,25 +47,21 @@ DropdownList b2BaseNote, b2Scale, b2Mod, b2MidiChannel, b2Presets;
 Numberbox b2DivisionsBox;
 int b2Divisions;
 LMDisplayDivs beam2Divs;
-LMDisplayBar beam2RawBar, beam2FiltBar;
+LMDisplayBar beam2RawBar, beam2FiltBar, beam2CMRawBar, beam2CMFiltBar;
 
 // TEST
-LMGPSensor testSensor;
-boolean noteIsTriggered = false;
-int lastNoteTriggered = 0;
+
 
 void setup() {
   size(1024,768,P2D); // Using the P2D renderer because it is fast. Fast renderer = better response. TODO: resize window
   smooth();
   frameRate(480);
-  
+   
+  setupArduino(); 
   midiSystem = new LMMidiControl(2, 3);
-  
+  beam1Control = new LMBeamControl(midiSystem, arduino);
   createGUI();
-  
-  setupArduino();
-  
-  testSensor = new LMGPSensor(arduino,0, 25);
+   
 
 }
 
@@ -72,18 +69,7 @@ void draw() {
   background(0);
   updateGUI();
   
-  if (testSensor.getMedianCentimeters() < 50) {
-    if (noteIsTriggered == false) {
-      int nt = (int)testSensor.getMedianCentimeters() + 40;
-      midiSystem.sendNoteOn(1,nt,90);
-      lastNoteTriggered = nt;
-      noteIsTriggered = true;
-    }
-  }
-  if (testSensor.getMedianCentimeters() > 52 && noteIsTriggered) {
-    midiSystem.sendNoteOff(1,lastNoteTriggered,90);
-    noteIsTriggered = false;
-  }
+  beam1Control.update();
   
   cp5.draw(); // Necessary because of the P2D renderer
 }
@@ -120,7 +106,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam1Control.enable();
         }
       }
     })
@@ -131,7 +117,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam1Control.disable();
         }
       }
     })
@@ -142,7 +128,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam1Control.getStatus();
         }
       }
     })
@@ -153,7 +139,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam1Control.panic();
         }
       }
     })
@@ -372,6 +358,10 @@ void createGUI() {
   beam2Divs = new LMDisplayDivs(400,122);
   beam2RawBar = new LMDisplayBar(400,131);
   beam2FiltBar = new LMDisplayBar(400, 141);
+  beam2CMRawBar = new LMDisplayBar(400, 151);
+  beam2CMRawBar.setMax(70);
+  beam2CMFiltBar = new LMDisplayBar(400, 161);
+  beam2CMFiltBar.setMax(70);
   
   
   // MIDI ----------------------------------------------------------------------***********************
@@ -475,13 +465,11 @@ void createGUI() {
     if (s.length() > 24) {s = s.substring(0,24);}
     midiOutputList.addItem(s, i);
   }
-  // TODO: set value of output list, via init value of midiSystem
   ptChList = cp5.addDropdownList("ECHO CH")
     .setPosition(midiX+325, midiY+60)
     .setSize(60,100)
     .addListener(new ControlListener() {
       public void controlEvent(ControlEvent theEvent) {
-        println((int)theEvent.getValue());
         // TODO: update midiSystem.setPassthroughChannel here
       }
     })
@@ -616,7 +604,7 @@ void updateGUI() {
   // Beam 1
   fill(255);
   textFont(mainFont);
-  text("BEAM 1 >> HALTED", 10, 10); // This needs to take its string from a beam controller
+  text("BEAM 1 >> " + beam1Control.getStatus(), 10, 10);
   stroke(255);
   line(10,29,395,29);
   // below 2 lines are clumsy
@@ -624,20 +612,19 @@ void updateGUI() {
   rect(10,75,385,20);
   fill(255);
   textFont(smallFont);
-  text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",14,79); // This needs to take its string from a beam controller
+  text(beam1Control.info,14,79);
   stroke(4,104,154);
   line(53,112,53,122);
   //line(10,122,395,122);
   
   beam1Divs.draw();
-  beam1ADCRawBar.setValue(arduino.analogRead(0));
+  beam1ADCRawBar.setValue(beam1Control.gpSensor.getValue());
   beam1ADCRawBar.draw();
-  testSensor.update();
-  beam1ADCFiltBar.setValue(testSensor.getMedianAverage());
+  beam1ADCFiltBar.setValue(beam1Control.gpSensor.getMedianAverage());
   beam1ADCFiltBar.draw();
-  beam1CMRawBar.setValue(testSensor.getCentimeters());
+  beam1CMRawBar.setValue(beam1Control.gpSensor.getCentimeters());
   beam1CMRawBar.draw();
-  beam1CMFiltBar.setValue(testSensor.getMedianCentimeters());
+  beam1CMFiltBar.setValue(beam1Control.gpSensor.getMedianCentimeters());
   beam1CMFiltBar.draw();
   
   // Beam 2
@@ -660,6 +647,10 @@ void updateGUI() {
   beam2RawBar.draw();
   // beam2FiltBar.setValue(foo.filt);
   beam2FiltBar.draw();
+  // beam2CMRawBar.setValue(testSensor.getCentimeters());
+  beam2CMRawBar.draw();
+  // beam2CMFiltBar.setValue(testSensor.getMedianCentimeters());
+  beam2CMFiltBar.draw();
   
   // System stats
   fill(255);
@@ -697,6 +688,7 @@ void updateGUI() {
   midiSystem.midiLog.draw();
   
   // OSC Subsystem
+  textFont(mainFont);
   text("OSC >> " + "TODO ", oscX+2, oscY);
   line(oscX,oscY+19,oscX+385,oscY+19);
   
@@ -741,7 +733,7 @@ class LMOsc extends OscP5 {
   }
 }
 /*********************
- * LMBeamControl class
+ * LMBeamControl class, this class represents a single beam and all related classes
  *********************/
 class LMBeamControl {
   int divs;
@@ -752,18 +744,45 @@ class LMBeamControl {
   boolean enabled;
   int channel;
   int velocity;
+  int gpPin, laserPin;
   LMMidiControl midi;
+  LMGPSensor gpSensor;
+  LMLaserSensor laserSensor;
+  Arduino arduino;
+  float centimeters;
+  boolean lastLaserSample;
   
-  LMBeamControl(LMMidiControl mc) {
+  LMBeamControl(LMMidiControl mc, Arduino ar) {
     midi = mc;
     enabled = false;
     status = "DISABLED";
     info = "SCALE: " + "foo" + " OCTV: " + "bar" + " BASE: " + base + " CHAN: " + channel ;
     channel = 1;
     velocity = 90;
+    gpPin = 0;
     currScale = LMConstants.major;
     base = 60;
     divs = 7; // fix this, perhaps constructor arg, needs to match UI value at init
+    gpSensor = new LMGPSensor(ar, gpPin, 15);
+    laserSensor = new LMLaserSensor(ar, laserPin, 15);
+    arduino = ar;
+    lastLaserSample = true;
+  }
+  void update() {
+    if (enabled) {
+      // the main update loop
+      gpSensor.update();
+      centimeters = gpSensor.getMedianCentimeters();
+      if (!laserSensor.value() && lastLaserSample) {
+        // TODO: note generation here
+      }
+      if (!laserSensor.value() && !lastLaserSample) {
+        // TODO: sustain/portamento stuff
+      }
+      if (laserSensor.value() && !lastLaserSample) {
+        // TODO: note off
+      }
+    }
   }
   void octaveUp() {
     base += 12;
@@ -792,9 +811,11 @@ class LMBeamControl {
   }
   void enable() {
     enabled = true;
+    status = "ENABLED";
   }
   void disable() {
     enabled = false;
+    status = "DISABLED";
     panic();
   }
  String getStatus() {
@@ -812,7 +833,20 @@ class LMBeamControl {
         midi.midiOut.sendNoteOff(channel,nt,63);
     }
   }
-  
+  void setGPPin(int p) {
+    gpPin = p;
+    gpSensor = new LMGPSensor(arduino, gpPin, 15);
+  }
+  int getGPPin() {
+    return gpPin;
+  }
+  void setLaserPin(int p) {
+    laserPin = p;
+    laserSensor = new LMLaserSensor(arduino, laserPin, 15);
+  }
+  int getLaserPin() {
+    return laserPin;
+  }
 }
 /*********************
  * LMOscClient class
@@ -927,7 +961,7 @@ class LMMidiControl {
       midiLog.addLine((int)millis() + ": MIDI panicked");
     }
     else {
-      midiLog.addLine((int)millis() + ": MIDI not running");
+      midiLog.addLine((int)millis() + ": Panic failed, MIDI not running");
     }
   }
   void list() {
@@ -988,6 +1022,15 @@ class LMDigitalSensor {
   }
   void setPin(int p) {
     pin = p;
+  }
+}
+/*******************************
+ * LMLaserSensor class
+ *******************************/
+class LMLaserSensor extends LMDigitalSensor {
+  // TODO: needs more
+  LMLaserSensor(Arduino a, int p, int avgLen) {
+    super(a, p, avgLen);
   }
 }
 
