@@ -19,9 +19,12 @@ PFont mainFont, smallFont;
 Arduino arduino;
 static final int ARDUINO_INDEX = 0; // This is index of Serial.list() which matches the Arduino, typically /dev/tty.usbserial-*
 
+// HIGHSCORE
+int HIGH_SCORE = 0;
+
 // MIDI
 LMMidiControl midiSystem;
-int midiX = 10, midiY = 160; // This makes moving around the entire MIDI GUI section much easier
+int midiX = 10, midiY = 180; // This makes moving around the entire MIDI GUI section much easier
 DropdownList midiInputList, midiOutputList, ptChList;
 
 // OSC
@@ -36,7 +39,7 @@ DropdownList b1BaseNote, b1Scale, b1Mod, b1MidiChannel, b1Presets;
 Numberbox b1DivisionsBox;
 int b1Divisions;
 LMDisplayDivs beam1Divs;
-LMDisplayBar beam1RawBar, beam1FiltBar;
+LMDisplayBar beam1ADCRawBar, beam1ADCFiltBar, beam1CMRawBar, beam1CMFiltBar;
 
 // Beam 2
 DropdownList b2BaseNote, b2Scale, b2Mod, b2MidiChannel, b2Presets;
@@ -44,6 +47,11 @@ Numberbox b2DivisionsBox;
 int b2Divisions;
 LMDisplayDivs beam2Divs;
 LMDisplayBar beam2RawBar, beam2FiltBar;
+
+// TEST
+LMGPSensor testSensor;
+boolean noteIsTriggered = false;
+int lastNoteTriggered = 0;
 
 void setup() {
   size(1024,768,P2D); // Using the P2D renderer because it is fast. Fast renderer = better response. TODO: resize window
@@ -54,16 +62,29 @@ void setup() {
   
   createGUI();
   
-  // setupArduino();
+  setupArduino();
   
-  
+  testSensor = new LMGPSensor(arduino,0, 25);
 
 }
 
 void draw() {
   background(0);
   updateGUI();
-
+  
+  if (testSensor.getMedianCentimeters() < 50) {
+    if (noteIsTriggered == false) {
+      int nt = (int)testSensor.getMedianCentimeters() + 40;
+      midiSystem.sendNoteOn(1,nt,90);
+      lastNoteTriggered = nt;
+      noteIsTriggered = true;
+    }
+  }
+  if (testSensor.getMedianCentimeters() > 52 && noteIsTriggered) {
+    midiSystem.sendNoteOff(1,lastNoteTriggered,90);
+    noteIsTriggered = false;
+  }
+  
   cp5.draw(); // Necessary because of the P2D renderer
 }
 
@@ -217,8 +238,12 @@ void createGUI() {
     .setValue("DIVS")
     ;
   beam1Divs = new LMDisplayDivs(10,122);
-  beam1RawBar = new LMDisplayBar(10,131);
-  beam1FiltBar = new LMDisplayBar(10, 141);
+  beam1ADCRawBar = new LMDisplayBar(10,131);
+  beam1ADCFiltBar = new LMDisplayBar(10, 141);
+  beam1CMRawBar = new LMDisplayBar(10, 151);
+  beam1CMRawBar.setMax(70);
+  beam1CMFiltBar = new LMDisplayBar(10, 161);
+  beam1CMFiltBar.setMax(70);
   
   // Beam 2 ----------------------------------------------------------------------***********************
   cp5.addButton("enable B2")
@@ -465,6 +490,7 @@ void createGUI() {
     ptChList.addItem("CH " + i, i);
   }
   midiSystem.midiLog.setPosition(midiX,midiY+62);
+  midiSystem.midiLog.setHeight(90);
   
   // OSC ----------------------------------------------------------------------***********************
   cp5.addButton("start OSC")
@@ -604,10 +630,15 @@ void updateGUI() {
   //line(10,122,395,122);
   
   beam1Divs.draw();
-  // beam1RawBar.setValue(foo.raw);
-  beam1RawBar.draw();
-  // beam1FiltBar.setValue(foo.filt);
-  beam1FiltBar.draw();
+  beam1ADCRawBar.setValue(arduino.analogRead(0));
+  beam1ADCRawBar.draw();
+  testSensor.update();
+  beam1ADCFiltBar.setValue(testSensor.getMedianAverage());
+  beam1ADCFiltBar.draw();
+  beam1CMRawBar.setValue(testSensor.getCentimeters());
+  beam1CMRawBar.draw();
+  beam1CMFiltBar.setValue(testSensor.getMedianCentimeters());
+  beam1CMFiltBar.draw();
   
   // Beam 2
   fill(255);
@@ -623,10 +654,11 @@ void updateGUI() {
   text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",414,79); // This needs to take its string from a beam controller
   stroke(4,104,154);
   line(443,112,443,122);
+  
   beam2Divs.draw();
-  // beam1RawBar.setValue(foo.raw);
+  beam2RawBar.setValue(arduino.analogRead(1));
   beam2RawBar.draw();
-  // beam1FiltBar.setValue(foo.filt);
+  // beam2FiltBar.setValue(foo.filt);
   beam2FiltBar.draw();
   
   // System stats
@@ -641,15 +673,19 @@ void updateGUI() {
   text("MOUSE X", 800, 35 + lineHeight);
   text("MOUSE Y", 800, 35 + lineHeight*2);
   text("FRAMES", 800, 35 + lineHeight*3);
-  text("HAS FOCUS", 800, 35 + lineHeight*4);
-  text("LOCAL TIME", 800, 35 + lineHeight*5);
+  text("MILLIS", 800, 35 + lineHeight*4);
+  text("HAS FOCUS", 800, 35 + lineHeight*5);
+  text("LOCAL TIME", 800, 35 + lineHeight*6);
+  text("HIGH SCORE", 800, 35 + lineHeight*7);
   textAlign(RIGHT,TOP);
   text(nf(frameRate,0,2), 1000, 35);
   text(mouseX, 1000, 35 + lineHeight);
   text(mouseY, 1000, 35 + lineHeight*2);
   text(frameCount, 1000, 35 + lineHeight*3);
-  text(new Boolean(focused).toString().toUpperCase(), 1000, 35 + lineHeight*4);
-  text(hour() + ":" + nf(minute(),2,-1) + ":" + nf(second(),2,-1), 1000, 35 + lineHeight*5);
+  text(millis(), 1000, 35 + lineHeight*4);
+  text(new Boolean(focused).toString().toUpperCase(), 1000, 35 + lineHeight*5);
+  text(hour() + ":" + nf(minute(),2,-1) + ":" + nf(second(),2,-1), 1000, 35 + lineHeight*6);
+  text(HIGH_SCORE, 1000, 35 + lineHeight*7);
   textAlign(LEFT,TOP);
   
   // MIDI Subsystem
@@ -682,6 +718,7 @@ void printlnToAll(String in) {
     systemStatusLog.addLine(in);
   } catch (Exception ex) {
     // No one cares
+    HIGH_SCORE ++;
   }
 }
 
@@ -859,6 +896,7 @@ class LMMidiControl {
     } catch(Exception e) {
       e.printStackTrace();
       printlnToAll("Failed to instantiate MIDI input device, device does not exist.");
+      HIGH_SCORE++;
     }
     try {
       midiOut = RWMidi.getOutputDevices()[midiOutputDevice].createOutput();
@@ -866,6 +904,7 @@ class LMMidiControl {
     } catch(Exception e) {
       e.printStackTrace();
       printlnToAll("Failed to instantiate MIDI output device, device does not exist.");
+      HIGH_SCORE++;
     }
     running = true;
     status = "RUNNING";
@@ -974,7 +1013,7 @@ class LMAnalogSensor {
     dt = 2;
     RC = 0.6f;
   }
-  
+  // Update must be run to use averages
   void update() {
     rawInput[currentIndex] = ar.analogRead(pin);
     currentIndex ++;
@@ -1036,6 +1075,10 @@ class LMGPSensor extends LMAnalogSensor {
   float getInches() {
     float adcValue = (float)ar.analogRead(pin);
     return (12343.85 * pow(adcValue,-1.15))/2.54;
+  }
+  float getMedianCentimeters() {
+    float adcValue = getMedianAverage();
+    return 12343.85 * pow(adcValue,-1.15);
   }
 }
 
@@ -1158,7 +1201,7 @@ class LMDisplayBar extends LMDisplay {
     value = 0f;
     barColor = color(0,255,0);
     outlineColor = color(4,104,154);
-    maximum = 200;
+    maximum = 1023;
     minimum = 0;
     isHorizontal = true;
   }
@@ -1259,6 +1302,17 @@ class LMDisplayList extends LMDisplay {
       else {
         text(contents[i], xPosition+2, yPosition + (textDescent()+textAscent())*(i+1)-textAscent()-1);
       }
+    }
+  }
+  // @override Overriding super.setHeight, because setHeight() needs to recalc length of contents
+  void setHeight(int h) {
+    // TODO: currently, changing the height results in the entire log being lost. Fix this.
+    displayHeight = h;
+    float lineHeight = textAscent() + textDescent(); // determine line height
+    int contentsLength = floor((displayHeight-lineHeight)/lineHeight); // determine how many line can fit in the requested display height
+    contents = new String[contentsLength];
+    for (int i=0; i < contents.length; i++) {
+      contents[i] = "";
     }
   }
   void addLine(String s) {
