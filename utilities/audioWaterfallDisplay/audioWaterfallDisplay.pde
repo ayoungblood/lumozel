@@ -19,13 +19,14 @@ FFT fftLog;
 WaterfallController wf;
 
 void setup() {
-  size(960,640,OPENGL);
+  size(1024,768,OPENGL);
+  frameRate(400);
   smooth();
   
   minim = new Minim(this);
   input = minim.getLineIn();
   fftLog = new FFT(input.bufferSize(), input.sampleRate());
-  fftLog.linAverages(8);
+  fftLog.linAverages(32);
   
   wf = new WaterfallController();
   
@@ -33,44 +34,68 @@ void setup() {
 
 void draw() {
   background(0);
-  translate(0,height/2+80,-250);
-  rotateX(HALF_PI-.2-(.4*sin(frameCount/130f)));
-  rotate(-.4+(.2*sin(frameCount/70f)));
+  fill(180);
+  text(frameRate,15,25);
+  fftLog.forward(input.mix);
+  float[] newSamps = new float[32];
+  for (int i=0; i < newSamps.length; i++) {
+    newSamps[i] = fftLog.getAvg(i)*((i/32)+1)*150;
+  }
+  wf.add(newSamps);
+  
+  rotateZ(mouseX/100f);
   wf.display();
+  
   
 }
 
 
 class WaterfallController {
-  public int[][] samples;
+  public float[][] samples;
+  private int fWidth = 32;
+  private int tLength = 64;
+  private int index = 0;
   
   WaterfallController() {
-    samples = new int[8][8];
+    samples = new float[tLength][fWidth];
     
   
-    for (int i=0; i < 8; i++) {
-      for (int j=0; j < 8; j++) {
-        samples[i][j] = i*j;
+    for (int t=0; t < tLength; t++) {
+      for (int f=0; f < fWidth; f++) {
+        samples[t][f] = 0;
       }
     }
   }
-  void update() {
-    
+  void add(float[] in) {
+    if (in.length == fWidth) {
+      samples[index] = in;
+      index++;
+    }
+    else {
+      background(255,0,0);
+    }
+    if (index > tLength-1) {
+      index = 0;
+    }
   }
   void display() {
-    fill(255);
-    noStroke();
+    pushMatrix();
+    translate(width/2+500,height/2+80,0);
+    rotate(PI);
+    rotateX(-HALF_PI+.6);
     fftLog.forward(input.mix);
-    for (int i=0; i < 8; i++) {
-      for (int j=0; j < 8; j++) {
+    for (int t=0; t < tLength; t++) {
+      for (int f=0; f < fWidth; f++) {
         pushMatrix();
-        translate(i*16,j*16,0);
-        translate(0,0,fftLog.getAvg(i)*32*((i/8)+1));
-        fill(fftLog.getAvg(i)*((i/8)+1)*200,255-fftLog.getAvg(i)*((i/8)+1)*1000,fftLog.getAvg(i)*((i/8)+1)*200);
-        box(10,10,fftLog.getAvg(i)*128*((i/8)+1));
+        translate(t*16,f*16,samples[t][f]/8);
+        colorMode(HSB,255);
+        fill(samples[t][f]*1.5,255,samples[t][f]*6f+50);
+        box(8,8,samples[t][f]);
+        colorMode(RGB,255);
         popMatrix();
       }
     }
+    popMatrix();
   }
   
 }
