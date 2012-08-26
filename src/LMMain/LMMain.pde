@@ -30,6 +30,9 @@ DropdownList midiInputList, midiOutputList, ptChList;
 // OSC
 int oscX = 400, oscY = 180; // Facilitates moving the GUI lump around
 Textfield serverPortField, client1IPField, client1PortField, client2IPField, client2PortField;
+// Temporary, TODO: fix
+OscP5 oscP5;
+NetAddress client1, client2;
 
 // SYS
 LMDisplayList systemStatusLog;
@@ -51,7 +54,7 @@ LMDisplayDivs beam2Divs;
 LMDisplayBar beam2ADCRawBar, beam2ADCFiltBar, beam2CMRawBar, beam2CMFiltBar;
 
 // Touch Sensors
-int tsX = 10, tsY = 260;
+int tsX = 10, tsY = 340;
 LMTouchSensor touch1, touch2, touch3, touch4;
 DropdownList touch1Assign, touch2Assign, touch3Assign, touch4Assign;
 
@@ -63,7 +66,8 @@ void setup() {
   smooth();
   frameRate(480);
    
-  setupArduino(); 
+  setupArduino();
+  
   midiSystem = new LMMidiControl(2, 3);
   beam1Control = new LMBeamControl(midiSystem, arduino);
   beam1Control.setGPPin(0);
@@ -888,11 +892,34 @@ void noteOffReceived(Note note) {
     midiSystem.midiOut.sendNoteOff(midiSystem.getPassthroughChannel(), note.getPitch(), note.getVelocity());
   }
 }
-class LMOsc extends OscP5 {
-  LMOsc(Object parent, int rxPort) {
-    super(parent, rxPort);
+
+/*********************
+ * LMOsc class, a collection of methods relating to OSCP5. !! Note that this class is temporary, and needs to be very fixed
+ * This entire class is bad programming practice!
+ *********************/
+class LMOsc {
+  void start() {
+    oscP5 = new OscP5(this, 1200);
+    client1 = new NetAddress("10.0.1.25",9000);
+    client2 = new NetAddress("10.0.1.26",9000);
+    printlnToAll(millis() + ": OSC Started");
   }
+  void stop() {
+    oscP5.dispose();
+    printlnToAll(millis() + ": OSC Disposed");
+  }
+  
 }
+
+// Callback event handler for incoming OSC data
+void oscEvent(OscMessage in) {
+  // TODO: switch to switch statement
+  if (in.typetag().equals("f")) {
+    // float received
+  }
+  
+}
+
 /*********************
  * LMBeamControl class, this class represents a single beam and all related classes
  *********************/
@@ -1033,12 +1060,14 @@ class LMOscClient extends NetAddress {
   }
   void setAddress(String addr) {
     address = addr;
+    println("FIX!");
   }
   String getAddress() {
     return address;
   }
   void setPort(int prt) {
     port = prt;
+    println("FIX!");
   }
   int getPort() {
     return port;
