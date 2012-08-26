@@ -43,11 +43,17 @@ LMDisplayDivs beam1Divs;
 LMDisplayBar beam1ADCRawBar, beam1ADCFiltBar, beam1CMRawBar, beam1CMFiltBar;
 
 // Beam 2
+LMBeamControl beam2Control;
 DropdownList b2BaseNote, b2Scale, b2Mod, b2MidiChannel, b2Presets;
 Numberbox b2DivisionsBox;
 int b2Divisions;
 LMDisplayDivs beam2Divs;
-LMDisplayBar beam2RawBar, beam2FiltBar, beam2CMRawBar, beam2CMFiltBar;
+LMDisplayBar beam2ADCRawBar, beam2ADCFiltBar, beam2CMRawBar, beam2CMFiltBar;
+
+// Touch Sensors
+int tsX = 10, tsY = 260;
+LMTouchSensor touch1, touch2, touch3, touch4;
+DropdownList touch1Assign, touch2Assign, touch3Assign, touch4Assign;
 
 // TEST
 
@@ -60,8 +66,19 @@ void setup() {
   setupArduino(); 
   midiSystem = new LMMidiControl(2, 3);
   beam1Control = new LMBeamControl(midiSystem, arduino);
+  beam1Control.setGPPin(0);
+  beam1Control.setLaserPin(3);
+  beam2Control = new LMBeamControl(midiSystem, arduino);
+  beam2Control.setGPPin(1);
+  beam2Control.setLaserPin(4);
+  
+  touch1 = new LMTouchSensor(arduino, 9, 10);
+  touch2 = new LMTouchSensor(arduino, 10, 10);
+  touch3 = new LMTouchSensor(arduino, 11, 10);
+  touch4 = new LMTouchSensor(arduino, 12, 10);
+  
   createGUI();
-   
+  
 
 }
 
@@ -70,6 +87,7 @@ void draw() {
   updateGUI();
   
   beam1Control.update();
+  beam2Control.update();
   
   cp5.draw(); // Necessary because of the P2D renderer
 }
@@ -150,7 +168,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam1Control.octaveDn();
         }
       }
     })
@@ -161,7 +179,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam1Control.octaveUp();
         }
       }
     })
@@ -169,6 +187,12 @@ void createGUI() {
   b1BaseNote = cp5.addDropdownList("base B1")
     .setPosition(10,70)
     .setSize(60,170)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        int closestC = (floor(beam1Control.getBase()/12))*12; // Floor to nearest C
+        beam1Control.setBase(closestC + (int)theEvent.getValue());
+      }
+    })
     ;
   for (int i=0; i < LMConstants.midiOffsets.length; i++) {
     b1BaseNote.addItem(LMConstants.midiOffsets[i], i);
@@ -176,6 +200,24 @@ void createGUI() {
   b1Scale = cp5.addDropdownList("scale B1")
     .setPosition(75,70)
     .setSize(60,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        switch((int)theEvent.getValue()) {
+          case 0:
+            beam1Control.setScale(LMConstants.major);
+            break;
+          case 1:
+            beam1Control.setScale(LMConstants.minor);
+            break;
+          case 2:
+            beam1Control.setScale(LMConstants.chromatic);
+            break;
+          default:
+            beam1Control.setScale(LMConstants.pentatonic);
+            break;
+        }
+      }
+    })
     ;
   b1Scale.addItem("MAJOR", 0);
   b1Scale.addItem("MINOR", 1);
@@ -184,12 +226,22 @@ void createGUI() {
   b1Mod = cp5.addDropdownList("mod B1")
     .setPosition(140,70)
     .setSize(60,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        // TODO
+      }
+    })
     ;
   b1Mod.addItem("PORTA OFF", 0);
   b1Mod.addItem("PORTA ON", 1);
   b1MidiChannel = cp5.addDropdownList("channel B1")
     .setPosition(205,70)
     .setSize(60,120)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        beam1Control.setChannel((int)theEvent.getValue());
+      }
+    })
     ;
   for (int i=1; i <= 16; i++) {
     b1MidiChannel.addItem("CH " + i, i);
@@ -197,6 +249,11 @@ void createGUI() {
   b1Presets = cp5.addDropdownList("presets B1")
     .setPosition(270,70)
     .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        // TODO
+      }
+    })
     ;
   b1Presets.addItem("C MAJ BASIC", 0);
   b1Presets.addItem("C MIN BASIC", 1);
@@ -214,7 +271,7 @@ void createGUI() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED || theEvent.getAction() == ControlP5.ACTION_RELEASEDOUTSIDE) {
           beam1Divs.setDivs((int)b1DivisionsBox.getValue());
-          // Update beam controller divisions here
+          // TODO: Update beam controller divisions here
         }
       }
     })
@@ -238,7 +295,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam2Control.enable();
         }
       }
     })
@@ -249,7 +306,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam2Control.disable();
         }
       }
     })
@@ -260,7 +317,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam2Control.getStatus();
         }
       }
     })
@@ -271,7 +328,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam2Control.panic();
         }
       }
     })
@@ -282,7 +339,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam2Control.octaveDn();
         }
       }
     })
@@ -293,7 +350,7 @@ void createGUI() {
     .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          // TODO
+          beam2Control.octaveUp();
         }
       }
     })
@@ -301,6 +358,12 @@ void createGUI() {
   b2BaseNote = cp5.addDropdownList("base B2")
     .setPosition(400,70)
     .setSize(60,170)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        int closestC = (floor(beam1Control.getBase()/12))*12; // Floor to nearest C
+        beam1Control.setBase(closestC + (int)theEvent.getValue());
+      }
+    })
     ;
   for (int i=0; i < LMConstants.midiOffsets.length; i++) {
     b2BaseNote.addItem(LMConstants.midiOffsets[i], i);
@@ -308,6 +371,24 @@ void createGUI() {
   b2Scale = cp5.addDropdownList("scale B2")
     .setPosition(465,70)
     .setSize(60,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        switch((int)theEvent.getValue()) {
+          case 0:
+            beam1Control.setScale(LMConstants.major);
+            break;
+          case 1:
+            beam1Control.setScale(LMConstants.minor);
+            break;
+          case 2:
+            beam1Control.setScale(LMConstants.chromatic);
+            break;
+          default:
+            beam1Control.setScale(LMConstants.pentatonic);
+            break;
+        }
+      }
+    })
     ;
   b2Scale.addItem("MAJOR", 0);
   b2Scale.addItem("MINOR", 1);
@@ -316,12 +397,22 @@ void createGUI() {
   b2Mod = cp5.addDropdownList("mod B2")
     .setPosition(530,70)
     .setSize(60,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        // TODO
+      }
+    })
     ;
   b2Mod.addItem("PORTA OFF", 0);
   b2Mod.addItem("PORTA ON", 1);
   b2MidiChannel = cp5.addDropdownList("channel B2")
     .setPosition(595,70)
     .setSize(60,120)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        beam1Control.setChannel((int)theEvent.getValue());
+      }
+    })
     ;
   for (int i=1; i <= 16; i++) {
     b2MidiChannel.addItem("CH " + i, i);
@@ -329,6 +420,11 @@ void createGUI() {
   b2Presets = cp5.addDropdownList("presets B2")
     .setPosition(660,70)
     .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        // TODO
+      }
+    })
     ;
   b2Presets.addItem("C MAJ BASIC", 0);
   b2Presets.addItem("C MIN BASIC", 1);
@@ -356,8 +452,8 @@ void createGUI() {
     .setValue("DIVS")
     ;
   beam2Divs = new LMDisplayDivs(400,122);
-  beam2RawBar = new LMDisplayBar(400,131);
-  beam2FiltBar = new LMDisplayBar(400, 141);
+  beam2ADCRawBar = new LMDisplayBar(400,131);
+  beam2ADCFiltBar = new LMDisplayBar(400, 141);
   beam2CMRawBar = new LMDisplayBar(400, 151);
   beam2CMRawBar.setMax(70);
   beam2CMFiltBar = new LMDisplayBar(400, 161);
@@ -593,9 +689,71 @@ void createGUI() {
     })
     ;
   
+  // Touch sensors
+  touch1Assign = cp5.addDropdownList("SENSOR 1 ASSIGN")
+    .setPosition(tsX, tsY+35)
+    .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        println((int)theEvent.getValue());
+        // TODO: update sensor assignment, and add conditional event type check here
+      }
+    })
+    ;
+  touch1Assign.addItem("B1 OCTV UP", 0);
+  touch1Assign.addItem("B1 OCTV DN", 1);
+  touch1Assign.addItem("B2 OCTV UP", 2);
+  touch1Assign.addItem("B2 OCTV DN", 3);
+  
+  touch2Assign = cp5.addDropdownList("SENSOR 2 ASSIGN")
+    .setPosition(tsX+130, tsY+35)
+    .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        println((int)theEvent.getValue());
+        // TODO: update sensor assignment, and add conditional event type check here
+      }
+    })
+    ;
+  touch2Assign.addItem("B1 OCTV UP", 0);
+  touch2Assign.addItem("B1 OCTV DN", 1);
+  touch2Assign.addItem("B2 OCTV UP", 2);
+  touch2Assign.addItem("B2 OCTV DN", 3);
+  touch3Assign = cp5.addDropdownList("SENSOR 3 ASSIGN")
+    .setPosition(tsX, tsY+55)
+    .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        println((int)theEvent.getValue());
+        // TODO: update sensor assignment, and add conditional event type check here
+      }
+    })
+    ;
+  touch3Assign.addItem("B1 OCTV UP", 0);
+  touch3Assign.addItem("B1 OCTV DN", 1);
+  touch3Assign.addItem("B2 OCTV UP", 2);
+  touch3Assign.addItem("B2 OCTV DN", 3);
+  touch4Assign = cp5.addDropdownList("SENSOR 4 ASSIGN")
+    .setPosition(tsX+130, tsY+55)
+    .setSize(125,100)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        println((int)theEvent.getValue());
+        // TODO: update sensor assignment, and add conditional event type check here
+      }
+    })
+    ;
+  touch4Assign.addItem("B1 OCTV UP", 0);
+  touch4Assign.addItem("B1 OCTV DN", 1);
+  touch4Assign.addItem("B2 OCTV UP", 2);
+  touch4Assign.addItem("B2 OCTV DN", 3);
+  
+  // FRONTING things here
+  b1BaseNote.bringToFront();
+  b2BaseNote.bringToFront();
 }
-// For redrawing anything that needs to be redrawn
-void updateGUI() {
+
+void updateGUI() { // For all things that need to be redrawn
   strokeWeight(1);
   
   // Status log, should be moved lower
@@ -630,7 +788,7 @@ void updateGUI() {
   // Beam 2
   fill(255);
   textFont(mainFont);
-  text("BEAM 2 >> HALTED", 400, 10);
+  text("BEAM 2 >> " + beam2Control.getStatus(), 400, 10);
   stroke(255);
   line(400,29,785,29);
   // below 2 lines are clumsy
@@ -638,18 +796,18 @@ void updateGUI() {
   rect(400,75,385,20);
   fill(255);
   textFont(smallFont);
-  text("KEY: C# MAJOR  OCTV: 4  BASE NOTE: 60  CHAN: 12",414,79); // This needs to take its string from a beam controller
+  text(beam2Control.info,404,79);
   stroke(4,104,154);
   line(443,112,443,122);
   
   beam2Divs.draw();
-  beam2RawBar.setValue(arduino.analogRead(1));
-  beam2RawBar.draw();
-  // beam2FiltBar.setValue(foo.filt);
-  beam2FiltBar.draw();
-  // beam2CMRawBar.setValue(testSensor.getCentimeters());
+  beam2ADCRawBar.setValue(beam2Control.gpSensor.getValue());
+  beam2ADCRawBar.draw();
+  beam2ADCFiltBar.setValue(beam2Control.gpSensor.getMedianAverage());
+  beam2ADCFiltBar.draw();
+  beam2CMRawBar.setValue(beam2Control.gpSensor.getCentimeters());
   beam2CMRawBar.draw();
-  // beam2CMFiltBar.setValue(testSensor.getMedianCentimeters());
+  beam2CMFiltBar.setValue(beam2Control.gpSensor.getMedianCentimeters());
   beam2CMFiltBar.draw();
   
   // System stats
@@ -692,6 +850,11 @@ void updateGUI() {
   text("OSC >> " + "TODO ", oscX+2, oscY);
   line(oscX,oscY+19,oscX+385,oscY+19);
   
+  // Touch Sensors
+  textFont(mainFont);
+  text("TOUCH SENSE", tsX+2, tsY);
+  line(tsX,tsY+19,tsX+385,tsY+19);
+  
 }
 
 void setupArduino() {
@@ -701,8 +864,6 @@ void setupArduino() {
   printlnToAll(millis() + ": Using Arduino at " + Arduino.list()[ARDUINO_INDEX]);
   
 }
-
-  
 
 void printlnToAll(String in) {
   println(in);
@@ -756,7 +917,7 @@ class LMBeamControl {
     midi = mc;
     enabled = false;
     status = "DISABLED";
-    info = "SCALE: " + "foo" + " OCTV: " + "bar" + " BASE: " + base + " CHAN: " + channel ;
+    info = "NOT UPDATED!" ;
     channel = 1;
     velocity = 90;
     gpPin = 0;
@@ -769,6 +930,7 @@ class LMBeamControl {
     lastLaserSample = true;
   }
   void update() {
+    info = "SCALE: " + getScaleName() + " KEY: " + getBaseName() + " OCTV: " + getOctave() + " BASE: " + base + " CHAN: " + channel ;
     if (enabled) {
       // the main update loop
       gpSensor.update();
@@ -784,27 +946,33 @@ class LMBeamControl {
       }
     }
   }
+  private String getBaseName() {
+    return LMConstants.midiOffsets[getBase()%12];
+  }
   void octaveUp() {
-    base += 12;
+    if (base+12 <= 127) {
+      base += 12;
+    }
   }
   void octaveDn() {
-    base -= 12;
+    if (base-12 >= 0) {
+      base -= 12;
+    }
   }
   void setOctave(int oct) {
-    base = oct*12 + 12;
+    base = constrain(oct*12 + 12,0,127);
   }
   int getOctave() {
-    return (base-12)/12;
-    // TODO: THIS NEEDS FIXING. It does not work for base notes that are not C
+    return floor((base)/12);
   }
   void setBase(int nt) {
-    base = nt;
+    base = constrain(nt,0,127);
   }
   int getBase() {
     return base;
   }
   void setChannel(int ch) {
-    channel = ch;
+    channel = constrain(ch,1,16);
   }
   int getChannel() {
     return channel;
@@ -826,6 +994,9 @@ class LMBeamControl {
   }
   int[] getScale() {
     return currScale;
+  }
+  String getScaleName() {
+    return "TODO";
   }
   void panic() {
     // This is a less powerful panic than LMMidiControl.panic(), as it only panics the current channel
@@ -884,7 +1055,7 @@ static class LMConstants {
   // Because static fields are unallowed in non-top level types.
   static final String[] midiOffsets = {"C","C#","D","D#","E","F","F#","G","A","A#","B"};
   // Oh my dear mayonnaise, I love this guy: http://www.grantmuller.com/MidiReference/doc/midiReference/ScaleReference.html
-  // TODO: consider switching to use enums
+  // TODO: consider switching to use enum-like structures
   static final int[] major = {0,2,4,5,7,9,11};
   static final int[] minor = {0,2,3,5,7,8,10};
   static final int[] chromatic = {0,1,2,3,4,5,6,7,8,9,10,11};
@@ -1033,7 +1204,57 @@ class LMLaserSensor extends LMDigitalSensor {
     super(a, p, avgLen);
   }
 }
-
+/*******************************
+ * LMTouchSensor class
+ *******************************/
+class LMTouchSensor extends LMDigitalSensor {
+  LMTouchSensorThread tsThread;
+  LMTouchSensor(Arduino a, int p, int avgLen) {
+    super(a, p, avgLen);
+    tsThread = new LMTouchSensorThread("name");
+    tsThread.start();
+  }
+  
+  // Inner class LMTouchSensorThread
+  class LMTouchSensorThread extends Thread {
+    boolean running;
+    String id;
+    LMTouchSensorThread(String i) {
+      id = i;
+      running = false;
+    }
+    // @Override Thread.start()
+    void start() {
+      running = true;
+      super.start();
+    }
+    // @Override Thread.run();
+    void run() {
+      while (running) { // ! Uses while, use caution and delays/sleeps to ensure it does not use too many CPU cycles
+        int counter = 0;
+        ar.pinMode(pin, Arduino.OUTPUT);
+        ar.digitalWrite(pin, Arduino.HIGH);
+        delay(1);
+        ar.digitalWrite(pin, Arduino.LOW);
+        ar.pinMode(pin, Arduino.INPUT);
+        delay(1);
+        while(ar.digitalRead(pin) == Arduino.HIGH) {
+          counter ++;
+          delay(1);
+          if (counter > 5) {
+            // Triggered
+            delay(1000); // If sensor is held, an event will fire every <this millis
+            break;
+          }
+        }
+      }
+    }
+    void quit() {
+      running = false;
+      interrupt();
+    }
+  }
+}
 /*******************************
  * LMAnalogSensor class
  *******************************/
