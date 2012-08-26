@@ -23,13 +23,13 @@ void setup() {
   frameRate(400);
   smooth();
   
+  // Start Minim audio
   minim = new Minim(this);
   input = minim.getLineIn();
   fftLog = new FFT(input.bufferSize(), input.sampleRate());
   fftLog.linAverages(32);
   
   wf = new WaterfallController();
-  
 }
 
 void draw() {
@@ -39,14 +39,11 @@ void draw() {
   fftLog.forward(input.mix);
   float[] newSamps = new float[32];
   for (int i=0; i < newSamps.length; i++) {
-    newSamps[i] = fftLog.getAvg(i)*((i/32)+1)*150;
+    newSamps[i] = fftLog.getAvg(i)*((i/32)+1)*50;
   }
   wf.add(newSamps);
   
-  rotateZ(mouseX/100f);
   wf.display();
-  
-  
 }
 
 
@@ -59,7 +56,6 @@ class WaterfallController {
   WaterfallController() {
     samples = new float[tLength][fWidth];
     
-  
     for (int t=0; t < tLength; t++) {
       for (int f=0; f < fWidth; f++) {
         samples[t][f] = 0;
@@ -84,22 +80,23 @@ class WaterfallController {
     rotate(PI);
     rotateX(-HALF_PI+.6);
     fftLog.forward(input.mix);
+    stroke(0);
+    colorMode(HSB,255);
     for (int t=0; t < tLength; t++) {
       for (int f=0; f < fWidth; f++) {
         pushMatrix();
         translate(t*16,f*16,samples[t][f]/8);
-        colorMode(HSB,255);
-        fill(samples[t][f]*1.5,255,samples[t][f]*6f+50);
+        fill(samples[t][f]*1.2,255,samples[t][f]*4f+40);
         box(8,8,samples[t][f]);
-        colorMode(RGB,255);
         popMatrix();
       }
     }
+    colorMode(RGB,255);
     popMatrix();
   }
-  
 }
 void exit() {
+  // Stop audio, stop Processing, and then stop the VM
   input.close();
   minim.stop();
   super.stop();
