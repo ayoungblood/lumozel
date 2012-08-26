@@ -39,7 +39,7 @@ void setup() {
   thresh = cp5.addSlider("THRESH")
     .setPosition(width-200,height-44)
     .setSize(150,10)
-    .setValue(100)
+    .setValue(200)
     .setRange(1,height/2-8)
     ;
   
@@ -77,7 +77,7 @@ void drawFFTAt(int x, int y, int w) {
       stroke(#ff0000);
       text(nf(fft.indexToFreq(i),0,1),map(i,0,fft.specSize(),0,w),13);
     }
-    line(map(i,0,fft.specSize(),0,w)+x,y,map(i,0,fft.specSize(),0,w)+x,y-constrain(fft.getBand(i)*fftAmp*(i/50f+1),0,height/2-10));
+    line(map(i,0,fft.specSize(),0,w)+x,y,map(i,0,fft.specSize(),0,w)+x,y-constrain(fft.getBand(i)*fftAmp*log(i+1.7),0,height/2-10));
   }
   fft.forward(input.right);
   stroke(#00aaff);
@@ -87,7 +87,7 @@ void drawFFTAt(int x, int y, int w) {
       stroke(#ff0000);
       text(nf(fft.indexToFreq(i),0,1),map(i,0,fft.specSize(),0,w),height-8);
     }
-    line(map(i,0,fft.specSize(),0,w)+x,y,map(i,0,fft.specSize(),0,w)+x,y+constrain(fft.getBand(i)*fftAmp*(i/50f+1),0,height/2-10));  
+    line(map(i,0,fft.specSize(),0,w)+x,y,map(i,0,fft.specSize(),0,w)+x,y+constrain(fft.getBand(i)*fftAmp*log(i+1.7),0,height/2-10));  
   }
 }
 
@@ -102,10 +102,8 @@ void mousePressed() {
 }
 
 void exit() {
-  // Because we need to close the audio input and stop Minim, we override the P5 exit() method.
-  // A side-effect of this is that the window will not destroy itself automagically.
   input.close();
   minim.stop();
-  super.stop(); // Hammertime!
-  println("Everything stopped. User must destroy window");
+  super.stop();
+  System.exit(0);
 }

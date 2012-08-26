@@ -20,9 +20,9 @@ AudioInput input;
 int xpos = 10;
 
 void setup() {
-  size(2300,1350,OPENGL);
+  size(2300,1360,OPENGL);
   frame.setResizable(true);
-  smooth();
+  //smooth();
   frameRate(240);
   textAlign(RIGHT);
   startMinimAudio();
@@ -38,18 +38,10 @@ void draw() {
 }
 void drawFFTLineAt(int x, int y, int h) {
   fft.forward(input.mix);
-  stroke(#00ffff);
   for (int i=0; i<fft.specSize(); i++) {
-    if (fft.getBand(i) < .8) {
-      stroke(0,0,fft.getBand(i)*2000);
-    }
-    else {
-      stroke(0,fft.getBand(i)*500,255);
-    }
-    if (fft.getBand(i) > 2) {
-      stroke(fft.getBand(i)*30,180,0);
-    }
-    point( x, h-map(i,0,fft.specSize(), 0, h) + y);
+    colorMode(HSB);
+    stroke(fft.getBand(i)*40,255,fft.getBand(i)*20*+20);
+    point( x, (int)h-map(i,0,fft.specSize(), 0, h) + y);
   }
 }
 void startMinimAudio() {

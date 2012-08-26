@@ -39,7 +39,7 @@ void draw() {
   fftLog.forward(input.mix);
   float[] newSamps = new float[32];
   for (int i=0; i < newSamps.length; i++) {
-    newSamps[i] = fftLog.getAvg(i)*((i/32)+1)*50;
+    newSamps[i] = fftLog.getAvg(i)*50*log(i+1.7);
   }
   wf.add(newSamps);
   
