@@ -9,7 +9,13 @@ void setup() {
 void draw() {
   background(0);
   image(img,0,0);
-  
+  loadPixels();
+  color result = get(xPos,7);
+  fill(result); noStroke();
+  rect(64,64,64,64);
+  xPos++;
+  if (xPos > 7) {xPos = 0;}
+  delay(100);
 }
 
 
