@@ -8,8 +8,9 @@ For more information, see the [wiki](http://github.com/ayoungblood/lumozel/wiki)
 Status
 ------
 
-Currently, there is no stable release.
-As of 2012-07-31, there is no compilable codebase.
+LMMain.pde is compilable, and functions only to a very limited extent.
+Many features are being developed, and much of the GUI is broken.
+Thus, there is currently no stable release.
 
 Goals
 -----
@@ -20,4 +21,5 @@ Goals
 * To use reusable classes in the code, allowing for their use in other contexts.
 * To create a software backend that will communicate with a variety of protocols, including OSC and MIDI.
 * To eventually create a standalone hardware component that requires no connection to a host computer.
-* To keep the entire codebase and schematics of the hardware publicly available. 
+* To keep the entire codebase and schematics of the hardware publicly available.
+* To structure the hardware such that it is modular and easily extendable. 
