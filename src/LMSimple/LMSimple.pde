@@ -19,8 +19,10 @@ int midiOutIndex = 0;
 Average ranger, laser;
 boolean noteTriggered = false;
 int lastNoteTriggered = 0;
+static final int[] minor = {0,2,3,5,7,8,10};
 
-
+PGraphics graph;
+int graphIndex = 0;
 
 void setup() {
   size(640,480,P2D);
@@ -29,16 +31,23 @@ void setup() {
   textMode(SCREEN);
   setupArduino();
   setupMidi();
-  ranger = new Average(arduino, 0, 15);
-  laser = new Average(arduino, 1, 5);
+  ranger = new Average(arduino, 0, 35);
+  laser = new Average(arduino, 1, 10);
+  
+  graph = createGraphics(620,250,P2D);
   
 }
 void draw() {
   background(0);
   float distance = 12343.85*pow(ranger.calculateMedian(),-1.15);
-  if (laser.calculateMedian() < 256) {
+  if (laser.calculateMedian() < 500) {
     if (noteTriggered == false) {
-      lastNoteTriggered = constrain(48+floor((distance-10)/3),0,127);
+      delay(100);
+      int offset = constrain(floor((distance-10)/10),0,6);
+      lastNoteTriggered = 60+minor[offset];
+      println(distance-10/7);
+      println(offset);
+      //lastNoteTriggered = constrain(48+floor((distance-10)/4),0,127);
       midiOut.sendNoteOn(1,lastNoteTriggered,90);
       noteTriggered = true;
     }
@@ -54,6 +63,24 @@ void draw() {
   text("lastNoteTriggered: " + lastNoteTriggered, 20, 65);
   text("laser: " + arduino.analogRead(1), 20, 85);
   text("framerate: " + frameRate, 20, 105);
+  drawGraph(distance,laser.calculateMedian());
+}
+void drawGraph(float a, float b) {
+  graph.beginDraw();
+  graph.fill(255,255,255,0);
+  graph.stroke(160);
+  graph.rect(0,0,graph.width-1,graph.height-1);
+  graph.stroke(0,255,0);
+  graph.point(graphIndex,graph.height-map(constrain(a,0,79),0,80,0,graph.height-2));
+  graph.stroke(0,0,255);
+  graph.point(graphIndex,graph.height-map(constrain(b,0,1024),0,1025,0,graph.height-2));
+  graphIndex++;
+  if (graphIndex > graph.width) {
+    graphIndex = 0;
+    //graph.background(0);
+  }
+  graph.endDraw();
+  image(graph, 10, 150);
 }
 
 class Average {
@@ -92,10 +119,18 @@ class Average {
   }
   // calculateMean() updates the float array, then recalculates and returns the average
   float calculateMean() {
-    // TODO: implement this. Note that this method is of limited use..
-    println("Do not use Average.calculateMean()!");
-    return 0.0f;
+    rawInput[index] = ar.analogRead(pin);
+    index++;
+    if (index >= avgLength) {
+      index = 0;
+    }
+    float sum = 0;
+    for (int i=0; i < rawInput.length; i++) {
+      sum += rawInput[i];
+    }
+    return sum/rawInput.length;
   }
+  // TODO: calculateMeanMedian() doesn't work
   float calculateMeanMedian() {
     medianInput[miindex] = calculateMedian();
     miindex ++;
@@ -108,7 +143,6 @@ class Average {
     }
     return sum/miavgLength;
   }
-  
 }
 void mousePressed() {
   
@@ -124,6 +158,7 @@ void setupMidi() {
   midiOut = RWMidi.getOutputDevices()[midiOutIndex].createOutput();
   println("Using "+RWMidi.getOutputDevices()[midiOutIndex]+" for MIDI output");
 }
+
 void panicMidi() {
   for (int ch=0;ch<16;ch++) {
     for (int nt=0;nt<128;nt++) {
@@ -132,7 +167,7 @@ void panicMidi() {
   }
 }
 
-// @Override PApplet.exit()
+@Override
 void exit() {
   midiOut.closeMidi();
   super.stop();
