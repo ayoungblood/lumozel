@@ -15,6 +15,7 @@ import rwmidi.*;
 ControlP5 cp5;
 Arduino arduino;
 MidiOutput midiOut;
+PFont font;
 int midiOutIndex = 0;
 Average ranger, laser;
 boolean noteTriggered = false;
@@ -29,10 +30,12 @@ void setup() {
   smooth();
   frameRate(480);
   textMode(SCREEN);
+  font = createFont("Courier", 12, true);
+  textFont(font);
   setupArduino();
   setupMidi();
-  ranger = new Average(arduino, 0, 35);
-  laser = new Average(arduino, 1, 10);
+  ranger = new Average(arduino, 0, 25);
+  laser = new Average(arduino, 1, 8);
   
   graph = createGraphics(620,250,P2D);
   
@@ -42,12 +45,10 @@ void draw() {
   float distance = 12343.85*pow(ranger.calculateMedian(),-1.15);
   if (laser.calculateMedian() < 500) {
     if (noteTriggered == false) {
-      delay(100);
+      delay(50);
       int offset = constrain(floor((distance-10)/10),0,6);
-      lastNoteTriggered = 60+minor[offset];
-      println(distance-10/7);
-      println(offset);
-      //lastNoteTriggered = constrain(48+floor((distance-10)/4),0,127);
+      //lastNoteTriggered = 60+minor[offset];
+      lastNoteTriggered = constrain(48+floor((distance-10)/4),0,127);
       midiOut.sendNoteOn(1,lastNoteTriggered,90);
       noteTriggered = true;
     }
@@ -58,11 +59,11 @@ void draw() {
       noteTriggered = false;
     }
   }
-  text("distance: " + distance, 20, 25);
-  text("noteTriggered: " + new Boolean(noteTriggered).toString(), 20, 45);
-  text("lastNoteTriggered: " + lastNoteTriggered, 20, 65);
-  text("laser: " + arduino.analogRead(1), 20, 85);
-  text("framerate: " + frameRate, 20, 105);
+  text("distance: " + distance, 10, 25);
+  text("noteTriggered: " + new Boolean(noteTriggered).toString(), 10, 45);
+  text("lastNoteTriggered: " + lastNoteTriggered, 10, 65);
+  text("laser: " + arduino.analogRead(1), 10, 85);
+  text("framerate: " + frameRate, 10, 105);
   drawGraph(distance,laser.calculateMedian());
 }
 void drawGraph(float a, float b) {
