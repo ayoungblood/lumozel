@@ -62,7 +62,7 @@ DropdownList touch1Assign, touch2Assign, touch3Assign, touch4Assign;
 
 
 void setup() {
-  size(1024,768,P2D); // Using the P2D renderer because it is fast. Fast renderer = better response. TODO: resize window
+  size(1024,568,P2D); // Using the P2D renderer because it is fast. Fast renderer = better response. TODO: resize window
   smooth();
   frameRate(480);
    
@@ -696,7 +696,7 @@ void createGUI() {
   // Touch sensors
   touch1Assign = cp5.addDropdownList("SENSOR 1 ASSIGN")
     .setPosition(tsX, tsY+35)
-    .setSize(125,100)
+    .setSize(90,100)
     .addListener(new ControlListener() {
       public void controlEvent(ControlEvent theEvent) {
         println((int)theEvent.getValue());
@@ -710,8 +710,8 @@ void createGUI() {
   touch1Assign.addItem("B2 OCTV DN", 3);
   
   touch2Assign = cp5.addDropdownList("SENSOR 2 ASSIGN")
-    .setPosition(tsX+130, tsY+35)
-    .setSize(125,100)
+    .setPosition(tsX+98, tsY+35)
+    .setSize(90,100)
     .addListener(new ControlListener() {
       public void controlEvent(ControlEvent theEvent) {
         println((int)theEvent.getValue());
@@ -724,8 +724,8 @@ void createGUI() {
   touch2Assign.addItem("B2 OCTV UP", 2);
   touch2Assign.addItem("B2 OCTV DN", 3);
   touch3Assign = cp5.addDropdownList("SENSOR 3 ASSIGN")
-    .setPosition(tsX, tsY+55)
-    .setSize(125,100)
+    .setPosition(tsX+196, tsY+35)
+    .setSize(90,100)
     .addListener(new ControlListener() {
       public void controlEvent(ControlEvent theEvent) {
         println((int)theEvent.getValue());
@@ -738,8 +738,8 @@ void createGUI() {
   touch3Assign.addItem("B2 OCTV UP", 2);
   touch3Assign.addItem("B2 OCTV DN", 3);
   touch4Assign = cp5.addDropdownList("SENSOR 4 ASSIGN")
-    .setPosition(tsX+130, tsY+55)
-    .setSize(125,100)
+    .setPosition(tsX+294, tsY+35)
+    .setSize(90,100)
     .addListener(new ControlListener() {
       public void controlEvent(ControlEvent theEvent) {
         println((int)theEvent.getValue());
@@ -829,7 +829,6 @@ void updateGUI() { // For all things that need to be redrawn
   text("MILLIS", 800, 35 + lineHeight*4);
   text("HAS FOCUS", 800, 35 + lineHeight*5);
   text("LOCAL TIME", 800, 35 + lineHeight*6);
-  text("HIGH SCORE", 800, 35 + lineHeight*7);
   textAlign(RIGHT,TOP);
   text(nf(frameRate,0,2), 1000, 35);
   text(mouseX, 1000, 35 + lineHeight);
@@ -838,7 +837,16 @@ void updateGUI() { // For all things that need to be redrawn
   text(millis(), 1000, 35 + lineHeight*4);
   text(new Boolean(focused).toString().toUpperCase(), 1000, 35 + lineHeight*5);
   text(hour() + ":" + nf(minute(),2,-1) + ":" + nf(second(),2,-1), 1000, 35 + lineHeight*6);
-  text(HIGH_SCORE, 1000, 35 + lineHeight*7);
+  textAlign(LEFT,TOP);
+  
+  // Debug section
+  textFont(mainFont);
+  text("DEBUG", 800, 180);
+  line(800,199,1000,199);
+  textFont(smallFont);
+  text("HIGH SCORE", 800, 205);
+  textAlign(RIGHT,TOP);
+  text(HIGH_SCORE, 1000, 205);
   textAlign(LEFT,TOP);
   
   // MIDI Subsystem
