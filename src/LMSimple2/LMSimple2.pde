@@ -24,7 +24,10 @@ OscP5 oscP5;
 NetAddress client;
 int beam1X = 10, beam1Y = 10;
 int beam2X = 290, beam2Y = 10;
+int systemX = 10, systemY = 100;
+int midiX = 290, midiY = 100;
 DropdownList beam1NoteList;
+LMS2Beam beam1, beam2;
 
 void setup() {
   size(640,480,P2D);
@@ -40,6 +43,9 @@ void setup() {
   setupGUI();
   //logfile = createWriter("log.txt");
   //logfile.print("Started at " + (int)(System.currentTimeMillis()/1000L) + "\n\n");
+  
+  beam1 = new LMS2Beam(midiOut);
+  beam2 = new LMS2Beam(midiOut);
 }
 void draw() {
   background(0);
@@ -106,6 +112,21 @@ void drawGUI() {
   text("BEAM 2", beam2X, beam2Y+13);
   stroke(255);
   line(beam2X,beam2Y+18,beam2X+270,beam2Y+18);
+  text("SYSTEM", systemX, systemY+13);
+  line(systemX,systemY+18,systemX+270,systemY+18);
+  text("mX",systemX,systemY+37);
+  float lineH = textAscent()+textDescent();
+  text("mY",systemX,systemY+37+lineH);
+  text("FPS",systemX,systemY+37+2*lineH);
+  text("LOCAL T",systemX,systemY+37+3*lineH);
+  textAlign(TOP,RIGHT);
+  text(mouseX,systemX+100,systemY+37);
+  text(mouseY,systemX+100,systemY+37+lineH);
+  text(nf(frameRate,0,2),systemX+100,systemY+37+2*lineH);
+  text(hour() + ":" + nf(minute(),2,-1) + ":" + nf(second(),2,-1),systemX+100,systemY+37+3*lineH);
+  textAlign(TOP,LEFT);
+  text("MIDI",midiX,midiY+13);
+  line(midiX,midiY+18,midiX+270,midiY+18);
 }
 void setupGUI() {
   cp5 = new ControlP5(this);
@@ -116,7 +137,7 @@ void setupGUI() {
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          beam1.octaveDn();
         }
       }
     })
@@ -127,7 +148,7 @@ void setupGUI() {
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          beam1.octaveUp();
         }
       }
     })
@@ -175,7 +196,7 @@ void setupGUI() {
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          beam2.octaveDn();
         }
       }
     })
@@ -186,7 +207,7 @@ void setupGUI() {
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          //
+          beam2.octaveUp();
         }
       }
     })
@@ -227,6 +248,17 @@ void setupGUI() {
   .setIndex(0)
   .bringToFront()
   ;
+  cp5.addButton("panic")
+  .setSize(60,20)
+  .setPosition(midiX,midiY+25)
+  .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          midiPanic();
+        }
+      }
+    })
+  ;
   println(millis() + ": CP5 setup");
 }
 // Incoming OSC event callback
@@ -255,8 +287,9 @@ void setupOsc(int serverPort, String clientIP, int clientPort) {
 }
 void midiPanic() {
   for (int ch=0; ch<15; ch++) {
-    midiOut.sendController(0xB+ch, 0x7B, 0x00);
+    midiOut.sendController(ch, 0x7B, 0x00);
   }
+  println("MIDI: sent 0x7B on all channels, panic");
 }
 
 @Override
