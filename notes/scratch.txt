@@ -21,16 +21,19 @@ Audio I/O
 FFT displays
 
 Everything must be checked that it is updated. To check:
-Processing
+Processing (holding off on 2.0 until the project is presented)
 ControlP5
 OscP5, NetP5
 Minim
-whatever MIDI library we end up using
+RWMidi
 
 Exception catching needs to be much more heavily implemented.
 Some exceptions are best handled by waiting 1000ms and trying once again.
 
-This mess could probably be cleaned up with a couple interfaces.
+Consider adding many interfaces to LMMain, as it is very messy.
+
+Future considerations:
+A Picaxe micro could be used for audio synthesis, controlled by the Arduino
 
 NetAddress wrapper (LMOscClient) needs to be fixed
 
@@ -48,9 +51,8 @@ Section for MIDI
     MIDI status
     MIDI history
 
-Use 10px spacing for UI
 
-To implement later: Add support for non-linear spacing
+To implement later: Add support for non-linear beam division
 
 Two different capacitive touch sensing implementations:
 
