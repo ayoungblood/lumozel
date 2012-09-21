@@ -18,14 +18,15 @@ import rwmidi.*;
 ControlP5 cp5;
 Arduino arduino;
 MidiOutput midiOut;
-PFont font;
+PFont font, smallFont;
 PrintWriter logfile;
 OscP5 oscP5;
 NetAddress client;
-int beam1X = 10, beam1Y = 10;
-int beam2X = 290, beam2Y = 10;
-int systemX = 10, systemY = 100;
-int midiX = 290, midiY = 100;
+final int beam1X = 10, beam1Y = 10;
+final int beam2X = 290, beam2Y = 10;
+final int systemX = 10, systemY = 100;
+final int midiX = 290, midiY = 100;
+final int oscX = 10, oscY = 200;
 DropdownList beam1NoteList;
 LMS2Beam beam1, beam2;
 
@@ -36,6 +37,7 @@ void setup() {
   smooth();
   textMode(SCREEN);
   font = createFont("Arial", 18, true);
+  smallFont = createFont("Arial", 12, true);
   textFont(font);
   setupArduino(0);
   setupMidi(3);
@@ -80,7 +82,16 @@ class LMS2Beam {
   }
   // Using mutators and accessors, but skipping most of the accessors for now
   void setBase(int b) {
-    base = b;
+    if (b >= 0 && b <= 127) {
+      base = b;
+    }
+    else {
+      // TODO: should throw exception here, perhaps OutOfRangeish
+      println("invalid value, ignored");
+    }
+  }
+  int getBase() {
+    return base;
   }
   void setScale(int[] s) {
     scale = s;
@@ -91,7 +102,6 @@ class LMS2Beam {
   void octaveUp() {
     base += 12;
   }
-  
 }
   
 static class LMConstants {
@@ -103,6 +113,8 @@ static class LMConstants {
     static final int[] chromatic = {0,1,2,3,4,5,6,7,8,9,10,11};
     static final int[] pentatonic = {0,2,4,7,9};
   }
+  // TODO: change class Scales to an array of Scale objects, to allow for much easier indexing/naming
+  // class Scale {int[] offsets; String name; etc
 }
 void drawGUI() {
   textAlign(TOP,LEFT);
@@ -127,6 +139,8 @@ void drawGUI() {
   textAlign(TOP,LEFT);
   text("MIDI",midiX,midiY+13);
   line(midiX,midiY+18,midiX+270,midiY+18);
+  text("OSC",oscX,oscY+13);
+  line(oscX,oscY+18,oscX+270,oscY+18);
 }
 void setupGUI() {
   cp5 = new ControlP5(this);
@@ -182,8 +196,10 @@ void setupGUI() {
   .addItems(LMConstants.scaleNames)
   .addListener(new ControlListener() {
     public void controlEvent(ControlEvent theEvent) {
-      println((int)theEvent.getValue());
-      // TODO
+      if ((int)theEvent.getValue() == 0) {beam1.setScale(LMConstants.Scales.major);}
+      if ((int)theEvent.getValue() == 1) {beam1.setScale(LMConstants.Scales.minor);}
+      if ((int)theEvent.getValue() == 2) {beam1.setScale(LMConstants.Scales.chromatic);}
+      if ((int)theEvent.getValue() == 3) {beam1.setScale(LMConstants.Scales.pentatonic);}
     }
   })
   .setIndex(0)
@@ -241,8 +257,10 @@ void setupGUI() {
   .addItems(LMConstants.scaleNames)
   .addListener(new ControlListener() {
     public void controlEvent(ControlEvent theEvent) {
-      println((int)theEvent.getValue());
-      // TODO
+      if ((int)theEvent.getValue() == 0) {beam2.setScale(LMConstants.Scales.major);}
+      if ((int)theEvent.getValue() == 1) {beam2.setScale(LMConstants.Scales.minor);}
+      if ((int)theEvent.getValue() == 2) {beam2.setScale(LMConstants.Scales.chromatic);}
+      if ((int)theEvent.getValue() == 3) {beam2.setScale(LMConstants.Scales.pentatonic);}
     }
   })
   .setIndex(0)
