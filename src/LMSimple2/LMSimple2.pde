@@ -52,7 +52,7 @@ void setup() {
 void draw() {
   background(0);
   drawGUI();
-  cp5.draw(); // ControlP5.draw must be called explicitly when using hte P2D renderer
+  cp5.draw(); // ControlP5.draw must be called explicitly when using the P2D renderer
 }
 
 class LMS2Beam {
@@ -64,7 +64,7 @@ class LMS2Beam {
   
   LMS2Beam(MidiOutput mo) {
     base = 60;
-    int[] scale = LMConstants.Scales.major;
+    scale = LMConstants.Scales.Major.offsets;
     out = mo;
     midiChannel = 0;
     velocity = 90;
@@ -80,7 +80,12 @@ class LMS2Beam {
       out.sendNoteOff(midiChannel,base+scale[index],velocity);
     }
   }
-  // Using mutators and accessors, but skipping most of the accessors for now
+  String getInfo() {
+    return "SCL: " + LMConstants.midiOffsets[base%12] + " OCTV: " + floor(base/12);
+  }
+  String getRawInfo() {
+    return "BASE: " + base;
+  }
   void setBase(int b) {
     if (b >= 0 && b <= 127) {
       base = b;
@@ -97,10 +102,20 @@ class LMS2Beam {
     scale = s;
   }
   void octaveDn() {
-    base -= 12;
+    if (base >= 12) {
+      base -= 12;
+    }
+    else {
+      // TODO
+    }
   }
   void octaveUp() {
-    base += 12;
+    if (base <= 115) {
+      base += 12;
+    }
+    else {
+      // TODO
+    }
   }
 }
   
@@ -108,34 +123,53 @@ static class LMConstants {
   static final String[] midiOffsets = {"C","C#","D","D#","E","F","F#","G","A","A#","B"};
   static final String[] scaleNames = {"major","minor","chromatic","pentatonic"};
   static class Scales {
-    static final int[] major = {0,2,4,5,7,9,11};
-    static final int[] minor = {0,2,3,5,7,8,10};
-    static final int[] chromatic = {0,1,2,3,4,5,6,7,8,9,10,11};
-    static final int[] pentatonic = {0,2,4,7,9};
+    static final class Major {
+      String name = "major";
+      static int[] offsets = {0,2,4,5,7,9,11};
+    }
+    static final class Minor {
+      String name = "minor";
+      static int[] offsets = {0,2,3,5,7,8,10};
+    }
+    static final class Chromatic {
+      String name = "chromatic";
+      static int[] offsets = {0,1,2,3,4,5,6,7,8,9,10,11};
+    }
+    static final class Pentatonic {
+      String name = "pentatonic";
+      static int[] offsets = {0,2,4,7,9};
+    }
   }
-  // TODO: change class Scales to an array of Scale objects, to allow for much easier indexing/naming
-  // class Scale {int[] offsets; String name; etc
+  // TODO Scales class is still broken, Scales needs to be an array of Scale object, each iwth name and offsets
 }
 void drawGUI() {
+  textFont(font);
   textAlign(TOP,LEFT);
   text("BEAM 1", beam1X, beam1Y+13);
   stroke(255);
   line(beam1X,beam1Y+18,beam1X+270,beam1Y+18);
+  textFont(smallFont);
+  text(beam1.getInfo(),beam1X,beam1Y+60);
+  text(beam1.getRawInfo(),beam1X,beam1Y+75);
+  textFont(font);
   text("BEAM 2", beam2X, beam2Y+13);
   stroke(255);
   line(beam2X,beam2Y+18,beam2X+270,beam2Y+18);
   text("SYSTEM", systemX, systemY+13);
   line(systemX,systemY+18,systemX+270,systemY+18);
-  text("mX",systemX,systemY+37);
+  textFont(smallFont);
+  int sysLineOffset = 34;
+  text("mX",systemX,systemY+sysLineOffset);
   float lineH = textAscent()+textDescent();
-  text("mY",systemX,systemY+37+lineH);
-  text("FPS",systemX,systemY+37+2*lineH);
-  text("LOCAL T",systemX,systemY+37+3*lineH);
+  text("mY",systemX,systemY+sysLineOffset+lineH);
+  text("FPS",systemX,systemY+sysLineOffset+2*lineH);
+  text("LOCAL T",systemX,systemY+sysLineOffset+3*lineH);
   textAlign(TOP,RIGHT);
-  text(mouseX,systemX+100,systemY+37);
-  text(mouseY,systemX+100,systemY+37+lineH);
-  text(nf(frameRate,0,2),systemX+100,systemY+37+2*lineH);
-  text(hour() + ":" + nf(minute(),2,-1) + ":" + nf(second(),2,-1),systemX+100,systemY+37+3*lineH);
+  text(mouseX,systemX+100,systemY+sysLineOffset);
+  text(mouseY,systemX+100,systemY+sysLineOffset+lineH);
+  text(nf(frameRate,0,2),systemX+100,systemY+sysLineOffset+2*lineH);
+  text(hour() + ":" + nf(minute(),2,-1) + ":" + nf(second(),2,-1),systemX+100,systemY+sysLineOffset+3*lineH);
+  textFont(font);
   textAlign(TOP,LEFT);
   text("MIDI",midiX,midiY+13);
   line(midiX,midiY+18,midiX+270,midiY+18);
@@ -196,10 +230,10 @@ void setupGUI() {
   .addItems(LMConstants.scaleNames)
   .addListener(new ControlListener() {
     public void controlEvent(ControlEvent theEvent) {
-      if ((int)theEvent.getValue() == 0) {beam1.setScale(LMConstants.Scales.major);}
-      if ((int)theEvent.getValue() == 1) {beam1.setScale(LMConstants.Scales.minor);}
-      if ((int)theEvent.getValue() == 2) {beam1.setScale(LMConstants.Scales.chromatic);}
-      if ((int)theEvent.getValue() == 3) {beam1.setScale(LMConstants.Scales.pentatonic);}
+      if ((int)theEvent.getValue() == 0) {beam1.setScale(LMConstants.Scales.Major.offsets);}
+      if ((int)theEvent.getValue() == 1) {beam1.setScale(LMConstants.Scales.Minor.offsets);}
+      if ((int)theEvent.getValue() == 2) {beam1.setScale(LMConstants.Scales.Chromatic.offsets);}
+      if ((int)theEvent.getValue() == 3) {beam1.setScale(LMConstants.Scales.Pentatonic.offsets);}
     }
   })
   .setIndex(0)
@@ -257,10 +291,10 @@ void setupGUI() {
   .addItems(LMConstants.scaleNames)
   .addListener(new ControlListener() {
     public void controlEvent(ControlEvent theEvent) {
-      if ((int)theEvent.getValue() == 0) {beam2.setScale(LMConstants.Scales.major);}
-      if ((int)theEvent.getValue() == 1) {beam2.setScale(LMConstants.Scales.minor);}
-      if ((int)theEvent.getValue() == 2) {beam2.setScale(LMConstants.Scales.chromatic);}
-      if ((int)theEvent.getValue() == 3) {beam2.setScale(LMConstants.Scales.pentatonic);}
+      if ((int)theEvent.getValue() == 0) {beam2.setScale(LMConstants.Scales.Major.offsets);}
+      if ((int)theEvent.getValue() == 1) {beam2.setScale(LMConstants.Scales.Minor.offsets);}
+      if ((int)theEvent.getValue() == 2) {beam2.setScale(LMConstants.Scales.Chromatic.offsets);}
+      if ((int)theEvent.getValue() == 3) {beam2.setScale(LMConstants.Scales.Pentatonic.offsets);}
     }
   })
   .setIndex(0)
