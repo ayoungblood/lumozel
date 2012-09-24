@@ -12,6 +12,16 @@ USB - note: get extender, perhaps USB Mini-B plug to USB B receptacle?
 
 Accessibility, ease of use, and easy theory use are important goals.
 
+NOTE: Processing IDE does not support enums, foreach, generics, varargs, etc.
+Processing only supports Java 1.4(and earlier) syntax.
+Workaround is to develop in another Java IDE
+
+SCALES
+MAJOR       {0,2,4,5,7,9,11}
+MINOR       {0,2,3,5,7,8,10}
+CHROMATIC   {0,1,2,3,4,5,6,7,8,9,10,11}
+PENTATONIC  {0,2,4,7,9}
+
 Priorities, from high to low:
 Core
 MIDI output

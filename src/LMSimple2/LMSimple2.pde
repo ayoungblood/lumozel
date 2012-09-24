@@ -29,6 +29,10 @@ final int midiX = 290, midiY = 100;
 final int oscX = 10, oscY = 200;
 DropdownList beam1NoteList;
 LMS2Beam beam1, beam2;
+LMS2Average beam1Avg, beam2Avg;
+LMS2DigitalPin beam1Laser, beam2Laser;
+
+final int ledPin = 13;
 
 void setup() {
   size(640,480,P2D);
@@ -48,9 +52,20 @@ void setup() {
   
   beam1 = new LMS2Beam(midiOut);
   beam2 = new LMS2Beam(midiOut);
+  beam1Avg = new LMS2Average(arduino,0,30);
+  beam2Avg = new LMS2Average(arduino,1,30);
+  beam1Laser = new LMS2DigitalPin(arduino,3,2);
+  beam2Laser = new LMS2DigitalPin(arduino,4,2);
+
 }
 void draw() {
   background(0);
+  beam1Avg.update();
+  beam1Avg.update();
+  beam1Laser.update();
+  beam2Laser.update();
+  
+  
   drawGUI();
   cp5.draw(); // ControlP5.draw must be called explicitly when using the P2D renderer
 }
@@ -64,7 +79,7 @@ class LMS2Beam {
   
   LMS2Beam(MidiOutput mo) {
     base = 60;
-    scale = LMConstants.Scales.Major.offsets;
+    //scale = LMConstants.Scales.Major.offsets;
     out = mo;
     midiChannel = 0;
     velocity = 90;
@@ -118,30 +133,80 @@ class LMS2Beam {
     }
   }
 }
+
+class LMS2Average {
+  Arduino ar;
+  int pin;
+  final int AVGLEN;
+  float[] raw;
+  int index;
   
-static class LMConstants {
-  static final String[] midiOffsets = {"C","C#","D","D#","E","F","F#","G","A","A#","B"};
-  static final String[] scaleNames = {"major","minor","chromatic","pentatonic"};
-  static class Scales {
-    static final class Major {
-      String name = "major";
-      static int[] offsets = {0,2,4,5,7,9,11};
-    }
-    static final class Minor {
-      String name = "minor";
-      static int[] offsets = {0,2,3,5,7,8,10};
-    }
-    static final class Chromatic {
-      String name = "chromatic";
-      static int[] offsets = {0,1,2,3,4,5,6,7,8,9,10,11};
-    }
-    static final class Pentatonic {
-      String name = "pentatonic";
-      static int[] offsets = {0,2,4,7,9};
+  LMS2Average(Arduino a, int p, int avglen) {
+    ar = a;
+    pin = p;
+    AVGLEN = avglen;
+    raw = new float[AVGLEN];
+    index = 0;
+  }
+  void update() {
+    // stuffs a new value from the pin onto the raw array
+    // does not recalculate the average!
+    raw[index] = ar.analogRead(pin);
+    index ++;
+    if (index >= AVGLEN) {
+      index = 0;
     }
   }
-  // TODO Scales class is still broken, Scales needs to be an array of Scale object, each iwth name and offsets
+  float getNiceAverage() {
+    // returns the mean average of the 5 middleish values of the raw array
+    float[] process = raw;
+    Arrays.sort(process);
+    int halfway = (int)AVGLEN/2;
+    float sum = 0;
+    for (int i=-2; i<2; i++) {
+      sum += process[halfway+i];
+    }
+    return sum/5.0f;
+  }
 }
+class LMS2DigitalPin {
+  Arduino ar;
+  int pin;
+  final int AVGLEN;
+  boolean[] raw;
+  int index;
+  
+  LMS2DigitalPin(Arduino a, int p, int avglen) {
+    ar = a;
+    pin = p;
+    AVGLEN = avglen;
+    raw = new boolean[AVGLEN];
+    index = 0;
+  }
+  void update() {
+    if (ar.digitalRead(pin) == Arduino.HIGH) {
+      raw[index] = true;
+    }
+    else {
+      raw[index] = false;
+    }
+    index ++;
+    if (index >= AVGLEN) {
+      index = 0;
+    }
+  }
+  boolean getNoAverage() {
+    return raw[index];
+  }
+}
+  
+static class LMConstants {
+  public static final String[] midiOffsets = {"C","C#","D","D#","E","F","F#","G","A","A#","B"};
+  public static final String[] scaleNames = {"major","minor","chromatic","pentatonic"};
+  // TODO: Scales should be implemented here. However, the PDE does not support enums.
+  // Find some way to implement a static array of scale objects or similar?
+}
+
 void drawGUI() {
   textFont(font);
   textAlign(TOP,LEFT);
@@ -155,6 +220,10 @@ void drawGUI() {
   text("BEAM 2", beam2X, beam2Y+13);
   stroke(255);
   line(beam2X,beam2Y+18,beam2X+270,beam2Y+18);
+  textFont(smallFont);
+  text(beam2.getInfo(),beam2X,beam2Y+60);
+  text(beam2.getRawInfo(),beam2X,beam2Y+75);
+  textFont(font);
   text("SYSTEM", systemX, systemY+13);
   line(systemX,systemY+18,systemX+270,systemY+18);
   textFont(smallFont);
@@ -230,10 +299,12 @@ void setupGUI() {
   .addItems(LMConstants.scaleNames)
   .addListener(new ControlListener() {
     public void controlEvent(ControlEvent theEvent) {
+      /*
       if ((int)theEvent.getValue() == 0) {beam1.setScale(LMConstants.Scales.Major.offsets);}
       if ((int)theEvent.getValue() == 1) {beam1.setScale(LMConstants.Scales.Minor.offsets);}
       if ((int)theEvent.getValue() == 2) {beam1.setScale(LMConstants.Scales.Chromatic.offsets);}
       if ((int)theEvent.getValue() == 3) {beam1.setScale(LMConstants.Scales.Pentatonic.offsets);}
+      */
     }
   })
   .setIndex(0)
@@ -291,10 +362,12 @@ void setupGUI() {
   .addItems(LMConstants.scaleNames)
   .addListener(new ControlListener() {
     public void controlEvent(ControlEvent theEvent) {
+      /*
       if ((int)theEvent.getValue() == 0) {beam2.setScale(LMConstants.Scales.Major.offsets);}
       if ((int)theEvent.getValue() == 1) {beam2.setScale(LMConstants.Scales.Minor.offsets);}
       if ((int)theEvent.getValue() == 2) {beam2.setScale(LMConstants.Scales.Chromatic.offsets);}
       if ((int)theEvent.getValue() == 3) {beam2.setScale(LMConstants.Scales.Pentatonic.offsets);}
+      */
     }
   })
   .setIndex(0)
@@ -325,6 +398,8 @@ void oscEvent(OscMessage in) {
 void setupArduino(int j) {
   println(Arduino.list());
   arduino = new Arduino(this, Arduino.list()[j], 57600);
+  arduino.pinMode(ledPin, Arduino.OUTPUT);
+  arduino.digitalWrite(ledPin, Arduino.HIGH);
   println("Using Arduino at: " + Arduino.list()[j]);
 }
 void setupMidi(int j) {
@@ -343,7 +418,6 @@ void midiPanic() {
   }
   println("MIDI: sent 0x7B on all channels, panic");
 }
-
 @Override
 void exit() {
   midiOut.closeMidi();
