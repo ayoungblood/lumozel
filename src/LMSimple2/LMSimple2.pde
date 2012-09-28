@@ -24,9 +24,9 @@ OscP5 oscP5;
 NetAddress client;
 final int beam1X = 10, beam1Y = 10;
 final int beam2X = 290, beam2Y = 10;
-final int systemX = 10, systemY = 100;
-final int midiX = 290, midiY = 100;
-final int oscX = 10, oscY = 200;
+final int systemX = 10, systemY = 140;
+final int midiX = 290, midiY = 140;
+final int oscX = 10, oscY = 240;
 DropdownList beam1NoteList;
 LMS2Beam beam1, beam2;
 LMS2Average beam1Avg, beam2Avg;
@@ -56,7 +56,8 @@ void setup() {
   beam2Avg = new LMS2Average(arduino,1,30);
   beam1Laser = new LMS2DigitalPin(arduino,3,2);
   beam2Laser = new LMS2DigitalPin(arduino,4,2);
-
+  
+  arduino.digitalWrite(ledPin, Arduino.LOW);
 }
 void draw() {
   background(0);
@@ -65,6 +66,7 @@ void draw() {
   beam1Laser.update();
   beam2Laser.update();
   
+      
   
   drawGUI();
   cp5.draw(); // ControlP5.draw must be called explicitly when using the P2D renderer
@@ -76,6 +78,8 @@ class LMS2Beam {
   MidiOutput out;
   int midiChannel;
   int velocity;
+  boolean noteIsPlaying;
+  int lastIndexOn;
   
   LMS2Beam(MidiOutput mo) {
     base = 60;
@@ -83,6 +87,8 @@ class LMS2Beam {
     out = mo;
     midiChannel = 0;
     velocity = 90;
+    noteIsPlaying = false;
+    lastIndexOn = 0;
   }
   
   void noteOnFromIndex(int index) {
@@ -198,6 +204,14 @@ class LMS2DigitalPin {
   boolean getNoAverage() {
     return raw[index];
   }
+  String getNoAverageAsString() {
+    if (raw[index] == true) {
+      return "true";
+    }
+    else {
+      return "false";
+    }
+  }
 }
   
 static class LMConstants {
@@ -216,6 +230,8 @@ void drawGUI() {
   textFont(smallFont);
   text(beam1.getInfo(),beam1X,beam1Y+60);
   text(beam1.getRawInfo(),beam1X,beam1Y+75);
+  text(beam1Avg.getNiceAverage(),beam1X,beam1Y+90);
+  text(beam1Laser.getNoAverageAsString(),beam1X,beam1Y+105);
   textFont(font);
   text("BEAM 2", beam2X, beam2Y+13);
   stroke(255);
@@ -223,6 +239,8 @@ void drawGUI() {
   textFont(smallFont);
   text(beam2.getInfo(),beam2X,beam2Y+60);
   text(beam2.getRawInfo(),beam2X,beam2Y+75);
+  text(beam2Avg.getNiceAverage(),beam2X,beam2Y+90);
+  text(beam2Laser.getNoAverageAsString(),beam2X,beam2Y+105);
   textFont(font);
   text("SYSTEM", systemX, systemY+13);
   line(systemX,systemY+18,systemX+270,systemY+18);

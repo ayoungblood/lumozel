@@ -16,6 +16,9 @@ NOTE: Processing IDE does not support enums, foreach, generics, varargs, etc.
 Processing only supports Java 1.4(and earlier) syntax.
 Workaround is to develop in another Java IDE
 
+Switch to all non-primitive data types eventually.
+Switching to at least Boolean is easily possible.
+
 SCALES
 MAJOR       {0,2,4,5,7,9,11}
 MINOR       {0,2,3,5,7,8,10}
