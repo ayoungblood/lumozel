@@ -23,6 +23,7 @@ int b1LastNote, b2LastNote;
 int beam1X = 10, beam1Y = 10, beam2X = 290, beam2Y = 10;
 int sysX = 10, sysY = 200, touchX = 290, touchY = 200;
 Beam beam1, beam2;
+TouchSensor ts1;
 
 void setup() {
   size(640,480,P2D);
@@ -40,6 +41,7 @@ void setup() {
   
   beam1 = new Beam();
   beam2 = new Beam();
+  ts1 = new TouchSensor(arduino,8);
 }
 void draw() {
   background(0);
@@ -70,20 +72,20 @@ void draw() {
     }
   }
   // --------------------------------
-  if (laser1.medianBool() == false) {
+  if (laser2.medianBool() == false) {
     if (beam2.notePlaying == false) {
       int c = 5;
       
       while (c > 0) {
-        ranger1.push(arduino.analogRead(0));
+        ranger2.push(arduino.analogRead(0));
         c--;
       }
-      beam2.lastNote = constrain( (beam2.base+minor[constrain((int)(ranger1.medianCm()/beam2.distanceScaleFactor),0,minor.length-1)]), 0, 127);
+      beam2.lastNote = constrain( (beam2.base+minor[constrain((int)(ranger2.medianCm()/beam2.distanceScaleFactor),0,minor.length-1)]), 0, 127);
       midiOut.sendNoteOn(0,beam2.lastNote,90);
       beam2.notePlaying = true;
     }
   }
-  if (laser1.medianBool() == true) {
+  if (laser2.medianBool() == true) {
     if (beam2.notePlaying == true) {
       midiOut.sendNoteOff(0,beam2.lastNote,90);
       beam2.notePlaying = false;
@@ -107,8 +109,44 @@ class Beam {
     base = 48;
     distanceScaleFactor = 5;
   }
+  void octaveDn() {
+    if (base - 12 >= 0) {
+      base-=12;
+    }
+  }
+  void octaveUp() {
+    if (base + 12 <= 127) {
+      base+=12;
+    }
+  }
 }
 
+class TouchSensor {
+  int pin;
+  long startTime;
+  long nextTime;
+  long counter;
+  Arduino ar;
+  
+  TSThread heart;
+  TouchSensor(Arduino a, int p) {
+    ar = a;
+    pin = p;
+    startTime = 0;
+    nextTime = 0;
+    counter = 0;
+    heart = new TSThread();
+  }
+  
+  class TSThread extends Thread {
+    boolean running;
+    String id;
+    TSThread() {
+      id = java.lang.Integer.toHexString((int)random(65536));
+      println("TSThread " + id + " started");
+    }
+  }
+}
 
 
 class Average {
@@ -189,6 +227,7 @@ void updateGui() {
   line(sysX,sysY+18,sysX+270,sysY+18);
   textFont(smallFont);
   text("FPS: " + frameRate,sysX,sysY+32);
+  text("MX x MY: " + mouseX + " x " + mouseY,sysX,sysY+46);
   
   // TOUCH
   textFont(bigFont);
@@ -206,6 +245,7 @@ void setupGui() {
   bigFont = createFont("Arial", 18, true);
   smallFont = createFont("Arial", 12, true);
   cp5 = new ControlP5(this);
+  // BEAM 1
   cp5.addButton("1 OCTV DN")
   .setSize(60,20)
   .setPosition(beam1X,beam1Y+65)
@@ -213,7 +253,44 @@ void setupGui() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
           // @Todo
-          println("!! Error: Event handler empty");
+          println("Unimplemented! @: " + this.toString());
+        }
+      }
+    })
+  ;
+  cp5.addButton("1 OCTV UP")
+  .setSize(60,20)
+  .setPosition(beam1X+70,beam1Y+65)
+  .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          // @Todo
+          println("Unimplemented! @: " + this.toString());
+        }
+      }
+    })
+  ;
+  // BEAM 2
+  cp5.addButton("2 OCTV DN")
+  .setSize(60,20)
+  .setPosition(beam2X,beam2Y+65)
+  .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          // @Todo
+          println("Unimplemented! @: " + this.toString());
+        }
+      }
+    })
+  ;
+  cp5.addButton("2 OCTV UP")
+  .setSize(60,20)
+  .setPosition(beam2X+70,beam2Y+65)
+  .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          // @Todo
+          println("Unimplemented! @: " + this.toString());
         }
       }
     })
