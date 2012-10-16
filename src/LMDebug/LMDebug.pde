@@ -22,6 +22,7 @@ boolean b1Playing, b2Playing;
 int b1LastNote, b2LastNote;
 int beam1X = 10, beam1Y = 10, beam2X = 290, beam2Y = 10;
 int sysX = 10, sysY = 200, touchX = 290, touchY = 200;
+Beam beam1, beam2;
 
 void setup() {
   size(640,480,P2D);
@@ -37,10 +38,8 @@ void setup() {
   arduino.pinMode(6,Arduino.INPUT);
   arduino.pinMode(7,Arduino.INPUT);
   
-  b1Playing = false;
-  b2Playing = false;
-  b1LastNote = 0;
-  b2LastNote = 0;
+  beam1 = new Beam();
+  beam2 = new Beam();
 }
 void draw() {
   background(0);
@@ -52,41 +51,42 @@ void draw() {
   
   // Main note-gen loop
   if (laser1.medianBool() == false) {
-    if (b1Playing == false) {
+    if (beam1.notePlaying == false) {
       int c = 5;
       
       while (c > 0) {
         ranger1.push(arduino.analogRead(0));
         c--;
       }
-      b1LastNote = constrain( (48+minor[constrain((int)(ranger1.medianCm()/5),0,minor.length-1)]), 0, 127);
-      midiOut.sendNoteOn(0,b1LastNote,90);
-      b1Playing = true;
+      beam1.lastNote = constrain( (beam1.base+minor[constrain((int)(ranger1.medianCm()/beam1.distanceScaleFactor),0,minor.length-1)]), 0, 127);
+      midiOut.sendNoteOn(0,beam1.lastNote,90);
+      beam1.notePlaying = true;
     }
   }
   if (laser1.medianBool() == true) {
-    if (b1Playing == true) {
-      midiOut.sendNoteOff(0,b1LastNote,90);
-      b1Playing = false;
+    if (beam1.notePlaying == true) {
+      midiOut.sendNoteOff(0,beam1.lastNote,90);
+      beam1.notePlaying = false;
     }
   }
-  if (laser2.medianBool() == false) {
-    if (b2Playing == false) {
+  // --------------------------------
+  if (laser1.medianBool() == false) {
+    if (beam2.notePlaying == false) {
       int c = 5;
       
       while (c > 0) {
-        ranger2.push(arduino.analogRead(1));
+        ranger1.push(arduino.analogRead(0));
         c--;
       }
-      b2LastNote = constrain( (60+minor[constrain((int)(ranger2.medianCm()/5),0,minor.length-1)]), 0, 127);
-      midiOut.sendNoteOn(1,b2LastNote,90);
-      b2Playing = true;
+      beam2.lastNote = constrain( (beam2.base+minor[constrain((int)(ranger1.medianCm()/beam2.distanceScaleFactor),0,minor.length-1)]), 0, 127);
+      midiOut.sendNoteOn(0,beam2.lastNote,90);
+      beam2.notePlaying = true;
     }
   }
-  if (laser2.medianBool() == true) {
-    if (b2Playing == true) {
-      midiOut.sendNoteOff(1,b2LastNote,90);
-      b2Playing = false;
+  if (laser1.medianBool() == true) {
+    if (beam2.notePlaying == true) {
+      midiOut.sendNoteOff(0,beam2.lastNote,90);
+      beam2.notePlaying = false;
     }
   }
   
@@ -108,6 +108,8 @@ class Beam {
     distanceScaleFactor = 5;
   }
 }
+
+
 
 class Average {
   float[] raw;
