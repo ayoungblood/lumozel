@@ -3,14 +3,16 @@ Lumozel
 
 Lumozel is intended to be a controller for live instrumentation, based primarily upon a variety of non-contact sensing methods. Lumozel is designed to be modular, and easily adaptable to other, perhaps non-musical, applications. It is also designed with the goal that it will be able to be played in such a way that someone with relatively little knowledge of musical theory can easily improvise.
 
+Lumozel is a project which has both a hardware component and a software component. This repository contains the development of the software component, which can also be used with other Arduino-based controller hardware setups. Currently, information on the hardware is unavailable, but will be made available as soon as possible.
+
 For more information, see the [wiki](http://github.com/ayoungblood/lumozel/wiki)
 
-Status
+Project Status
 ------
 
-LMMain.pde is compilable, and functions only to a very limited extent.
-Many features are being developed, and much of the GUI is broken.
-Thus, there is currently no stable release.
+LMMain.pde is currently only barely functional, and should not be used.
+LMDebug.pde can be used to a limited extent, although it is under heavy development and a great number of features are transitory, missing, or broken.
+The hardware component of the project is in a prototype phase.
 
 Goals
 -----
