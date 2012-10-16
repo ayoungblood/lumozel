@@ -14,20 +14,20 @@ import rwmidi.*;
 ControlP5 cp5;
 Arduino arduino;
 MidiOutput midiOut;
-PFont font;
+PFont bigFont, smallFont;
 int midiOutIndex = 0;
 static final int[] minor = {0,2,3,5,7,8,10};
 Average ranger1, ranger2, laser1, laser2;
 boolean b1Playing, b2Playing;
 int b1LastNote, b2LastNote;
+int beam1X = 10, beam1Y = 10, beam2X = 290, beam2Y = 10;
+int sysX = 10, sysY = 200, touchX = 290, touchY = 200;
 
 void setup() {
   size(640,480,P2D);
   smooth();
   frameRate(360);
-  textMode(SCREEN);
-  font = createFont("Arial", 14, true);
-  textFont(font);
+  setupGui();
   setupArduino();
   setupMidi();
   ranger1 = new Average(80);
@@ -44,19 +44,13 @@ void setup() {
 }
 void draw() {
   background(0);
-  // update
+  // Update all values
   ranger1.push(arduino.analogRead(0));
   ranger2.push(arduino.analogRead(1));
   laser1.push(arduino.digitalRead(6));
   laser2.push(arduino.digitalRead(7));
   
-  // display
-  text("RANGER1: " + ranger1.medianCm(),20,30);
-  text("RANGER2: " + ranger2.medianCm(),20,45);
-  text("LASER1: " + laser1.medianBool().toString(),20,60);
-  text("LASER2: " + laser2.medianBool().toString(),20,75);
-  text("FPS: " + frameRate,20,90);
-  
+  // Main note-gen loop
   if (laser1.medianBool() == false) {
     if (b1Playing == false) {
       int c = 5;
@@ -95,7 +89,26 @@ void draw() {
       b2Playing = false;
     }
   }
+  
+  updateGui();
+  
+  cp5.draw(); // ControlP5.draw() must be explicitly called when using the P2D renderer
 }
+
+class Beam {
+  boolean notePlaying;
+  int lastNote;
+  int base;
+  int distanceScaleFactor;
+  
+  Beam() {
+    notePlaying = false;
+    lastNote = 0;
+    base = 48;
+    distanceScaleFactor = 5;
+  }
+}
+
 class Average {
   float[] raw;
   int index;
@@ -142,13 +155,75 @@ class Average {
   }
       
 }
-    
-    
+
+void updateGui() {
+  // BEAM 1
+  textFont(bigFont);
+  textAlign(TOP,LEFT);
+  text("BEAM 1", beam1X, beam1Y+13);
+  stroke(255);
+  line(beam1X,beam1Y+18,beam1X+270,beam1Y+18);
+  textFont(smallFont);
+  text("RANGER1 MDCM: " + ranger1.medianCm(),beam1X,beam1Y+32);
+  text("LASER1 TRIG: " + laser1.medianBool().toString().toUpperCase(),beam1X,beam1Y+46);
+  text("PLACEHOLDER",beam1X,beam1Y+60);
+  
+  // BEAM 2
+  textFont(bigFont);
+  textAlign(TOP,LEFT);
+  text("BEAM 2", beam2X, beam2Y+13);
+  stroke(255);
+  line(beam2X,beam2Y+18,beam2X+270,beam2Y+18);
+  textFont(smallFont);
+  text("RANGER2 MDCM: " + ranger2.medianCm(),beam2X,beam2Y+32);
+  text("LASER2 TRIG: " + laser2.medianBool().toString().toUpperCase(),beam2X,beam2Y+46);
+  text("PLACEHOLDER",beam2X,beam2Y+60);
+  
+  // SYSTEM
+  textFont(bigFont);
+  textAlign(TOP,LEFT);
+  text("SYSTEM", sysX, sysY+13);
+  stroke(255);
+  line(sysX,sysY+18,sysX+270,sysY+18);
+  textFont(smallFont);
+  text("FPS: " + frameRate,sysX,sysY+32);
+  
+  // TOUCH
+  textFont(bigFont);
+  textAlign(TOP,LEFT);
+  text("TOUCH", touchX, touchY+13);
+  stroke(255);
+  line(touchX,touchY+18,touchX+270,touchY+18);
+  textFont(smallFont);
+  text("PLACEHOLDER",touchX,touchY+32);
+  
+}
+
+void setupGui() {
+  textMode(SCREEN);
+  bigFont = createFont("Arial", 18, true);
+  smallFont = createFont("Arial", 12, true);
+  cp5 = new ControlP5(this);
+  cp5.addButton("1 OCTV DN")
+  .setSize(60,20)
+  .setPosition(beam1X,beam1Y+65)
+  .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          // @Todo
+          println("!! Error: Event handler empty");
+        }
+      }
+    })
+  ;
+}
+
 void setupArduino() {
   println(Arduino.list());
   arduino = new Arduino(this, Arduino.list()[0], 57600);
   println("Using Arduino at: " + Arduino.list()[0]);
 }
+
 void setupMidi() {
   println(RWMidi.getOutputDevices());
   midiOut = RWMidi.getOutputDevices()[midiOutIndex].createOutput();
@@ -169,4 +244,5 @@ void exit() {
   super.stop();
   System.exit(0);
 }
+
 
