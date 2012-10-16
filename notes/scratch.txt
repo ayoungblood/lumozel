@@ -12,6 +12,9 @@ USB - note: get extender, perhaps USB Mini-B plug to USB B receptacle?
 
 Accessibility, ease of use, and easy theory use are important goals.
 
+To count total lines in a git repo, use 
+    git ls-files | xargs wc -l
+
 NOTE: Processing IDE does not support enums, foreach, generics, varargs, etc.
 Processing only supports Java 1.4(and earlier) syntax.
 Workaround is to develop in another Java IDE
