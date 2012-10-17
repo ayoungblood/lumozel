@@ -23,7 +23,7 @@ int b1LastNote, b2LastNote;
 int beam1X = 10, beam1Y = 10, beam2X = 290, beam2Y = 10;
 int sysX = 10, sysY = 200, touchX = 290, touchY = 200;
 Beam beam1, beam2;
-TouchSensor ts1;
+TouchSensor ts1, ts2, ts3, ts4;
 
 void setup() {
   size(640,480,P2D);
@@ -42,6 +42,9 @@ void setup() {
   beam1 = new Beam();
   beam2 = new Beam();
   ts1 = new TouchSensor(arduino,8);
+  ts1 = new TouchSensor(arduino,9);
+  ts1 = new TouchSensor(arduino,10);
+  ts1 = new TouchSensor(arduino,11);
 }
 void draw() {
   background(0);
@@ -142,8 +145,22 @@ class TouchSensor {
     boolean running;
     String id;
     TSThread() {
-      id = java.lang.Integer.toHexString((int)random(65536));
+      id = java.lang.Integer.toHexString((int)random(0xffffff));
+      println("TSThread " + id + " constructed");
+    }
+    @Override
+    void start() {
+      running = true;
+      super.start();
       println("TSThread " + id + " started");
+    }
+    @Override
+    void run() {
+      //
+    }
+    void quit() {
+      running = false;
+      interrupt();
     }
   }
 }
