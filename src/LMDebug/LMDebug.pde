@@ -17,16 +17,17 @@ MidiOutput midiOut;
 PFont bigFont, smallFont;
 int midiOutIndex = 0;
 static final int[] minor = {0,2,3,5,7,8,10};
+static final int[] major = {0,2,4,5,7,9,11};
+static final String[] midiNoteNames = {"C","C#","D","D#","E","F","F#","G","A","A#","B"};
+int ranger1Pin = 0, ranger2Pin = 1, laser1Pin = 3, laser2Pin = 4;
 Average ranger1, ranger2, laser1, laser2;
-boolean b1Playing, b2Playing;
-int b1LastNote, b2LastNote;
 int beam1X = 10, beam1Y = 10, beam2X = 290, beam2Y = 10;
 int sysX = 10, sysY = 200, touchX = 290, touchY = 200;
 Beam beam1, beam2;
-TouchSensor ts1, ts2, ts3, ts4;
+// TouchSensor ts1, ts2, ts3, ts4;
 
 void setup() {
-  size(640,480,P2D);
+  size(570,480,P2D);
   smooth();
   frameRate(360);
   setupGui();
@@ -36,23 +37,23 @@ void setup() {
   ranger2 = new Average(80);
   laser1 = new Average(10);
   laser2 = new Average(10);
-  arduino.pinMode(6,Arduino.INPUT);
-  arduino.pinMode(7,Arduino.INPUT);
+  arduino.pinMode(laser1Pin,Arduino.INPUT);
+  arduino.pinMode(laser2Pin,Arduino.INPUT);
   
   beam1 = new Beam();
   beam2 = new Beam();
-  ts1 = new TouchSensor(arduino,8);
-  ts1 = new TouchSensor(arduino,9);
-  ts1 = new TouchSensor(arduino,10);
-  ts1 = new TouchSensor(arduino,11);
+  //ts1 = new TouchSensor(arduino,6,0);
+  //ts2 = new TouchSensor(arduino,7,1);
+  //ts3 = new TouchSensor(arduino,10);
+  //ts4 = new TouchSensor(arduino,11);
 }
 void draw() {
   background(0);
   // Update all values
-  ranger1.push(arduino.analogRead(0));
-  ranger2.push(arduino.analogRead(1));
-  laser1.push(arduino.digitalRead(6));
-  laser2.push(arduino.digitalRead(7));
+  ranger1.push(arduino.analogRead(ranger1Pin));
+  ranger2.push(arduino.analogRead(ranger2Pin));
+  laser1.push(arduino.digitalRead(laser1Pin));
+  laser2.push(arduino.digitalRead(laser2Pin));
   
   // Main note-gen loop
   if (laser1.medianBool() == false) {
@@ -60,7 +61,7 @@ void draw() {
       int c = 5;
       
       while (c > 0) {
-        ranger1.push(arduino.analogRead(0));
+        ranger1.push(arduino.analogRead(ranger1Pin));
         c--;
       }
       beam1.lastNote = constrain( (beam1.base+minor[constrain((int)(ranger1.medianCm()/beam1.distanceScaleFactor),0,minor.length-1)]), 0, 127);
@@ -80,7 +81,7 @@ void draw() {
       int c = 5;
       
       while (c > 0) {
-        ranger2.push(arduino.analogRead(0));
+        ranger2.push(arduino.analogRead(ranger2Pin));
         c--;
       }
       beam2.lastNote = constrain( (beam2.base+minor[constrain((int)(ranger2.medianCm()/beam2.distanceScaleFactor),0,minor.length-1)]), 0, 127);
@@ -124,21 +125,28 @@ class Beam {
   }
 }
 
+String midiToNoteName(int i) {
+  return midiNoteNames[constrain(i%12,0,127)];
+}
+/* @Todo fix touch sensor stuff
 class TouchSensor {
   int pin;
   long startTime;
   long nextTime;
   long counter;
   Arduino ar;
+  int actionID;
   
   TSThread heart;
-  TouchSensor(Arduino a, int p) {
+  TouchSensor(Arduino a, int p, int aid) {
     ar = a;
     pin = p;
     startTime = 0;
     nextTime = 0;
     counter = 0;
     heart = new TSThread();
+    heart.start();
+    actionID = aid;
   }
   
   class TSThread extends Thread {
@@ -156,7 +164,36 @@ class TouchSensor {
     }
     @Override
     void run() {
-      //
+      while (running) {
+        counter = 0;
+        ar.pinMode(pin, Arduino.OUTPUT);
+        ar.digitalWrite(pin, Arduino.HIGH);
+        delay(1);
+        ar.digitalWrite(pin, Arduino.LOW);
+        ar.pinMode(pin, Arduino.INPUT);
+        delay(1);
+        while (ar.digitalRead(pin) == Arduino.HIGH) {
+          counter ++;
+          println(counter);
+          delay(1);
+          if (counter > 5) {
+            println("TSThread " + id + " event handler fired with count of " + counter);
+            
+            switch(actionID) {
+              case 0:
+                println("Action 0");
+                break;
+              case 1:
+                println("Action 1");
+                break;
+            }
+            
+            delay(1000);
+            break;
+          }
+        }
+      }
+      println("TSThread " + id + " exited with unknown status!");
     }
     void quit() {
       running = false;
@@ -164,7 +201,7 @@ class TouchSensor {
     }
   }
 }
-
+*/
 
 class Average {
   float[] raw;
@@ -216,44 +253,64 @@ class Average {
 void updateGui() {
   // BEAM 1
   textFont(bigFont);
-  textAlign(TOP,LEFT);
-  text("BEAM 1", beam1X, beam1Y+13);
+  textAlign(LEFT,TOP);
+  text("BEAM 1", beam1X, beam1Y);
   stroke(255);
   line(beam1X,beam1Y+18,beam1X+270,beam1Y+18);
   textFont(smallFont);
-  text("RANGER1 MDCM: " + ranger1.medianCm(),beam1X,beam1Y+32);
-  text("LASER1 TRIG: " + laser1.medianBool().toString().toUpperCase(),beam1X,beam1Y+46);
-  text("PLACEHOLDER",beam1X,beam1Y+60);
+  text("R1 MDCM:",beam1X,beam1Y+24);
+  text("L1 TRIG:",beam1X,beam1Y+40);
+  text("NOTE OUT:",beam1X,beam1Y+56);
+  text("BASE:",beam1X+140,beam1Y+24);
+  text("MULT:",beam1X+140,beam1Y+40);
+  text("RAW:",beam1X+140,beam1Y+56);
+  textAlign(RIGHT,TOP);
+  text(nf(ranger1.medianCm(),0,2),beam1X+130,beam1Y+24);
+  text(laser1.medianBool().toString().toUpperCase(),beam1X+130,beam1Y+40);
+  text(midiToNoteName(beam1.lastNote) + "/" + beam1.lastNote,beam1X+130,beam1Y+56);
+  text(beam1.base,beam1X+270,beam1Y+24);
+  text(beam1.distanceScaleFactor,beam1X+270,beam1Y+40);
+  text(arduino.analogRead(ranger1Pin),beam1X+270,beam1Y+56);
   
   // BEAM 2
   textFont(bigFont);
-  textAlign(TOP,LEFT);
-  text("BEAM 2", beam2X, beam2Y+13);
+  textAlign(LEFT,TOP);
+  text("BEAM 2", beam2X, beam2Y);
   stroke(255);
   line(beam2X,beam2Y+18,beam2X+270,beam2Y+18);
   textFont(smallFont);
-  text("RANGER2 MDCM: " + ranger2.medianCm(),beam2X,beam2Y+32);
-  text("LASER2 TRIG: " + laser2.medianBool().toString().toUpperCase(),beam2X,beam2Y+46);
-  text("PLACEHOLDER",beam2X,beam2Y+60);
+  text("R2 MDCM:",beam2X,beam2Y+24);
+  text("L2 TRIG:",beam2X,beam2Y+40);
+  text("NOTE OUT:",beam2X,beam2Y+56);
+  text("BASE:",beam2X+140,beam2Y+24);
+  text("MULT:",beam2X+140,beam2Y+40);
+  text("RAW:",beam2X+140,beam2Y+56);
+  textAlign(RIGHT,TOP);
+  text(nf(ranger2.medianCm(),0,2),beam2X+130,beam2Y+24);
+  text(laser2.medianBool().toString().toUpperCase(),beam2X+130,beam2Y+40);
+  text(midiToNoteName(beam2.lastNote) + "/" + beam2.lastNote,beam2X+130,beam2Y+56);
+  text(beam2.base,beam2X+270,beam2Y+24);
+  text(beam2.distanceScaleFactor,beam2X+270,beam2Y+40);
+  text(arduino.analogRead(ranger2Pin),beam2X+270,beam2Y+56);
   
   // SYSTEM
   textFont(bigFont);
-  textAlign(TOP,LEFT);
-  text("SYSTEM", sysX, sysY+13);
+  textAlign(LEFT,TOP);
+  text("SYSTEM", sysX, sysY);
   stroke(255);
   line(sysX,sysY+18,sysX+270,sysY+18);
   textFont(smallFont);
-  text("FPS: " + frameRate,sysX,sysY+32);
-  text("MX x MY: " + mouseX + " x " + mouseY,sysX,sysY+46);
+  text("FPS: " + frameRate,sysX,sysY+24);
+  text("MX x MY: " + mouseX + " x " + mouseY,sysX,sysY+40);
   
   // TOUCH
   textFont(bigFont);
-  textAlign(TOP,LEFT);
-  text("TOUCH", touchX, touchY+13);
+  textAlign(LEFT,TOP);
+  text("TOUCH", touchX, touchY);
   stroke(255);
   line(touchX,touchY+18,touchX+270,touchY+18);
   textFont(smallFont);
-  text("PLACEHOLDER",touchX,touchY+32);
+  text("PLACEHOLDER",touchX,touchY+24);
   
 }
 
@@ -265,7 +322,7 @@ void setupGui() {
   // BEAM 1
   cp5.addButton("1 OCTV DN")
   .setSize(60,20)
-  .setPosition(beam1X,beam1Y+65)
+  .setPosition(beam1X,beam1Y+75)
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
@@ -277,7 +334,7 @@ void setupGui() {
   ;
   cp5.addButton("1 OCTV UP")
   .setSize(60,20)
-  .setPosition(beam1X+70,beam1Y+65)
+  .setPosition(beam1X+70,beam1Y+75)
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
@@ -290,7 +347,7 @@ void setupGui() {
   // BEAM 2
   cp5.addButton("2 OCTV DN")
   .setSize(60,20)
-  .setPosition(beam2X,beam2Y+65)
+  .setPosition(beam2X,beam2Y+75)
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
@@ -302,7 +359,7 @@ void setupGui() {
   ;
   cp5.addButton("2 OCTV UP")
   .setSize(60,20)
-  .setPosition(beam2X+70,beam2Y+65)
+  .setPosition(beam2X+70,beam2Y+75)
   .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
