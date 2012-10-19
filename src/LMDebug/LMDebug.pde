@@ -17,11 +17,12 @@ MidiOutput midiOut;
 PFont bigFont, smallFont;
 int midiOutIndex = 0;
 static final String[] scaleNames = {"major","minor","chromatic","pentatonic"};
-static final int[] minor = {0,2,3,5,7,8,10};
-static final int[] major = {0,2,4,5,7,9,11};
-static final int[] chromatic = {0,1,2,3,4,5,6,7,8,9,10,11};
-static final int[] pentatonic = {0,2,4,7,9};
+static final int[] minor = {0,2,3,5,7,8,10,12,14,15,17,18,20,22,24}; // {0,2,3,5,7,8,10}
+static final int[] major = {0,2,4,5,7,9,11,12,14,16,17,19,23,24}; //{0,2,4,5,7,9,11}
+static final int[] chromatic = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24};
+static final int[] pentatonic = {0,2,4,7,9,12,14,16,19,21,24,26,28,31,33,36}; // {0,2,4,7,9}
 static final String[] midiNoteNames = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B","C"};
+static final String[] chans = {"0","1","2","3","4","5","6","7","8"}; // this is completely silly.
 int ranger1Pin = 0, ranger2Pin = 1, laser1Pin = 3, laser2Pin = 4;
 Average ranger1, ranger2, laser1, laser2;
 int beam1X = 10, beam1Y = 10, beam2X = 290, beam2Y = 10;
@@ -67,14 +68,14 @@ void draw() {
         ranger1.push(arduino.analogRead(ranger1Pin));
         c--;
       }
-      beam1.lastNote = constrain( (beam1.base+beam1.scale[constrain((int)(ranger1.medianCm()/beam1.distanceScaleFactor),0,minor.length-1)]), 0, 127);
-      midiOut.sendNoteOn(0,beam1.lastNote,90);
+      beam1.lastNote = constrain( (beam1.base+beam1.scale[constrain((int)(ranger1.medianCm()/beam1.distanceScaleFactor),0,beam1.scale.length-1)]), 0, 127);
+      midiOut.sendNoteOn(beam1.channel,beam1.lastNote,90);
       beam1.notePlaying = true;
     }
   }
   if (laser1.medianBool() == true) {
     if (beam1.notePlaying == true) {
-      midiOut.sendNoteOff(0,beam1.lastNote,90);
+      midiOut.sendNoteOff(beam1.channel,beam1.lastNote,90);
       beam1.notePlaying = false;
     }
   }
@@ -87,14 +88,14 @@ void draw() {
         ranger2.push(arduino.analogRead(ranger2Pin));
         c--;
       }
-      beam2.lastNote = constrain( (beam2.base+beam2.scale[constrain((int)(ranger2.medianCm()/beam2.distanceScaleFactor),0,minor.length-1)]), 0, 127);
-      midiOut.sendNoteOn(0,beam2.lastNote,90);
+      beam2.lastNote = constrain( (beam2.base+beam2.scale[constrain((int)(ranger2.medianCm()/beam2.distanceScaleFactor),0,beam2.scale.length-1)]), 0, 127);
+      midiOut.sendNoteOn(beam2.channel,beam2.lastNote,90);
       beam2.notePlaying = true;
     }
   }
   if (laser2.medianBool() == true) {
     if (beam2.notePlaying == true) {
-      midiOut.sendNoteOff(0,beam2.lastNote,90);
+      midiOut.sendNoteOff(beam2.channel,beam2.lastNote,90);
       beam2.notePlaying = false;
     }
   }
@@ -111,14 +112,16 @@ class Beam {
   int distanceScaleFactor;
   int[] scale;
   String scaleName;
+  int channel;
   
   Beam() {
     notePlaying = false;
     lastNote = 0;
     base = 48;
-    distanceScaleFactor = 5;
+    distanceScaleFactor = 8;
     scale = major;
     scaleName = "major";
+    channel = 0;
   }
   void octaveDn() {
     if (base - 12 >= 0) {
@@ -191,7 +194,6 @@ class Average {
       return new Boolean(false);
     }
   }
-      
 }
 
 void updateGui() {
@@ -207,14 +209,14 @@ void updateGui() {
   textFont(smallFont);
   text("R1 MDCM:",beam1X,beam1Y+24);
   text("L1 TRIG:",beam1X,beam1Y+40);
-  text("NOTE OUT:",beam1X,beam1Y+56);
+  text("OUT:",beam1X,beam1Y+56);
   text("BASE:",beam1X+140,beam1Y+24);
   text("MULT:",beam1X+140,beam1Y+40);
   text("RAW:",beam1X+140,beam1Y+56);
   textAlign(RIGHT,TOP);
   text(nf(ranger1.medianCm(),0,2),beam1X+130,beam1Y+24);
   text(laser1.medianBool().toString().toUpperCase(),beam1X+130,beam1Y+40);
-  text(midiToNoteName(beam1.lastNote) + "/" + beam1.lastNote,beam1X+130,beam1Y+56);
+  text(beam1.channel + ",  " + midiToNoteName(beam1.lastNote) + "/" + beam1.lastNote,beam1X+130,beam1Y+56);
   text(beam1.base + "/" + midiToNoteName(beam1.base),beam1X+270,beam1Y+24);
   text(beam1.distanceScaleFactor,beam1X+270,beam1Y+40);
   text(arduino.analogRead(ranger1Pin),beam1X+270,beam1Y+56);
@@ -231,14 +233,14 @@ void updateGui() {
   textFont(smallFont);
   text("R2 MDCM:",beam2X,beam2Y+24);
   text("L2 TRIG:",beam2X,beam2Y+40);
-  text("NOTE OUT:",beam2X,beam2Y+56);
+  text("OUT:",beam2X,beam2Y+56);
   text("BASE:",beam2X+140,beam2Y+24);
   text("MULT:",beam2X+140,beam2Y+40);
   text("RAW:",beam2X+140,beam2Y+56);
   textAlign(RIGHT,TOP);
   text(nf(ranger2.medianCm(),0,2),beam2X+130,beam2Y+24);
   text(laser2.medianBool().toString().toUpperCase(),beam2X+130,beam2Y+40);
-  text(midiToNoteName(beam2.lastNote) + "/" + beam2.lastNote,beam2X+130,beam2Y+56);
+  text(beam2.channel + ",  " + midiToNoteName(beam2.lastNote) + "/" + beam2.lastNote,beam2X+130,beam2Y+56);
   text(beam2.base + "/" + midiToNoteName(beam2.base),beam2X+270,beam2Y+24);
   text(beam2.distanceScaleFactor,beam2X+270,beam2Y+40);
   text(arduino.analogRead(ranger2Pin),beam2X+270,beam2Y+56);
@@ -345,6 +347,18 @@ void setupGui() {
     })
     .addItems(scaleNames)
     ;
+  cp5.addDropdownList("chan B1")
+    .setPosition(beam1X+70,beam1Y+115)
+    .setSize(60,60)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        if (theEvent.getValue() <= 8 && theEvent.getValue() >= 0) {
+          beam1.channel = (int)theEvent.getValue();
+        }
+      }
+    })
+    .addItems(chans)
+    ;
   cp5.addButton("1 DFSC DN")
   .setSize(60,20)
   .setPosition(beam1X+140,beam1Y+105)
@@ -442,6 +456,18 @@ void setupGui() {
       }
     })
     .addItems(scaleNames)
+    ;
+  cp5.addDropdownList("chan B2")
+    .setPosition(beam2X+70,beam2Y+115)
+    .setSize(60,60)
+    .addListener(new ControlListener() {
+      public void controlEvent(ControlEvent theEvent) {
+        if (theEvent.getValue() <= 8 && theEvent.getValue() >= 0) {
+          beam2.channel = (int)theEvent.getValue();
+        }
+      }
+    })
+    .addItems(chans)
     ;
   cp5.addButton("2 DFSC DN")
   .setSize(60,20)
