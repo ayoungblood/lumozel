@@ -28,7 +28,6 @@ Average ranger1, ranger2, laser1, laser2;
 int beam1X = 10, beam1Y = 10, beam2X = 290, beam2Y = 10;
 int sysX = 10, sysY = 180, touchX = 290, touchY = 180;
 Beam beam1, beam2;
-// TouchSensor ts1, ts2, ts3, ts4;
 
 void setup() {
   size(570,270,P2D);
@@ -46,10 +45,6 @@ void setup() {
   
   beam1 = new Beam();
   beam2 = new Beam();
-  //ts1 = new TouchSensor(arduino,6,0);
-  //ts2 = new TouchSensor(arduino,7,1);
-  //ts3 = new TouchSensor(arduino,10);
-  //ts4 = new TouchSensor(arduino,11);
 }
 void draw() {
   background(0);
@@ -59,7 +54,7 @@ void draw() {
   laser1.push(arduino.digitalRead(laser1Pin));
   laser2.push(arduino.digitalRead(laser2Pin));
   
-  // Main note-gen loop
+  // Main note-gen loop --------------------------------
   if (laser1.medianBool() == false) {
     if (beam1.notePlaying == false) {
       int c = 5;
@@ -79,7 +74,7 @@ void draw() {
       beam1.notePlaying = false;
     }
   }
-  // --------------------------------
+  // second note-gen loop --------------------------------
   if (laser2.medianBool() == false) {
     if (beam2.notePlaying == false) {
       int c = 5;
@@ -101,7 +96,6 @@ void draw() {
   }
   
   updateGui();
-  
   cp5.draw(); // ControlP5.draw() must be explicitly called when using the P2D renderer
 }
 
@@ -261,11 +255,14 @@ void updateGui() {
   // TOUCH
   textFont(bigFont);
   textAlign(LEFT,TOP);
-  text("TOUCH", touchX, touchY);
+  text("PINS", touchX, touchY);
   stroke(255);
   line(touchX,touchY+18,touchX+270,touchY+18);
   textFont(smallFont);
-  text("DISABLED",touchX,touchY+24);
+  text("RANGER1 @ A" + ranger1Pin,touchX,touchY+24);
+  text("RANGER2 @ A" + ranger2Pin,touchX,touchY+40);
+  text("LASER1 @ D" + laser1Pin,touchX,touchY+56);
+  text("LASER2 @ D" + laser2Pin,touchX,touchY+72);
   
 }
 
