@@ -9,7 +9,7 @@ Additionally, plans are underway for a new client-device communication design th
 
 The main software client (there are in fact several different flavors) is written in [Processing](http://processing.org/).
 
-For more information, see the [wiki](http://github.com/ayoungblood/lumozel/wiki)
+#### **Please visit the [wiki](http://github.com/ayoungblood/lumozel/wiki) for more information including all the hardware designs.**
 
 A SketchUp mockup of the controller prototype chassis:
 ![lumozel_chassis.png](https://raw.github.com/wiki/ayoungblood/lumozel/lumozel_chassis.png)
