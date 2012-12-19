@@ -33,3 +33,9 @@ Goals
 * To eventually create a standalone hardware component that requires no connection to a host computer.
 * To keep the entire codebase and schematics of the hardware publicly available.
 * To structure the hardware such that it is modular and easily extendable.
+
+See Also
+--------
+
+[Dropsway](http://dropsway.com) - Dropsway seeks to make music and improvisation easily graspable by those unfamiliar with music theory. Dropsway was founded by my good friend and colleague Joseph Johnston. In the future, I hope that the Lumozel can be used as a "Dropsway-compatible" music interface.
+
