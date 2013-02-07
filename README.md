@@ -14,13 +14,17 @@ The main software client (there are in fact several different flavors) is writte
 A SketchUp mockup of the controller prototype chassis:
 ![lumozel_chassis.png](https://raw.github.com/wiki/ayoungblood/lumozel/lumozel_chassis.png)
 
+Picture of the initial build of the hardware, with temporary wooden end covers (later replaced by plexiglas):
+![lumozel_unfinished.jpg](https://raw.github.com/wiki/ayoungblood/lumozel/lumozel_unfinished.jpg)
+
 Project Status
 ------
 
 LMDebug.pde is working! It is a basic interface, and only offers MIDI output, but it is stable and seems to work excellently.
-LMMain.pde is still under development, and is very unstable.
-The hardware component of the project is in a prototype phase.
-The entire codebase of the project should not be considered as a release, as it has not been licensed yet. It will be licensed by Dec. 25, probably under an open-source license.
+LMMain.pde is still under development, and is very unstable. It may prove to be impossible to achieve proper operating speed with all the code running computer-side in Java. It may prove much more feasible to do the detection math on the Arduino itself, and then communicate with a native application on the computer to provide UI.
+The hardware component of the project is finished.
+The entire codebase of the project should not be considered as a release, as it still has many bugs. However, many of the utilities are fully functional and quite handy.
+
 
 Goals
 -----
